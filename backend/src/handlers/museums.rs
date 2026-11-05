@@ -4,7 +4,7 @@ use uuid::Uuid;
 use crate::AppState;
 use crate::models::Museum;
 
-// 1. Получить все музеи
+
 pub async fn get_museums(
     State(state): State<AppState>,
 ) -> Result<Json<Vec<Museum>>, StatusCode> {
@@ -21,7 +21,7 @@ pub async fn get_museums(
     }
 }
 
-// 2. Получить музей по ID
+
 pub async fn get_museum_by_id(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
