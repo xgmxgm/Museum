@@ -1,6 +1,7 @@
 mod routes;
 mod handlers;
-mod db;
+mod db; 
+mod models;
 
 use sqlx::PgPool;
 
