@@ -1,21 +1,24 @@
-use axum::{extract::State, Json, http::StatusCode};
+use axum::{
+    extract::{State, Request, Extension},
+    Json,
+    http::StatusCode,
+    middleware::Next,
+    response::Response,
+};
 use argon2::{Argon2, PasswordHasher, PasswordVerifier};
 use argon2::password_hash::phc::PasswordHash;
-use jsonwebtoken::{encode, EncodingKey, Header};
+use jsonwebtoken::{encode, decode, EncodingKey, DecodingKey, Header, Validation};
 use serde::{Deserialize, Serialize};
 use validator::Validate;
 use chrono::{Utc, Duration};
+use uuid::Uuid;
+
 use crate::AppState;
-use crate::models::{User, RegisterRequest, LoginRequest, AuthResponse};
+use crate::models::{User, RegisterRequest, LoginRequest, AuthResponse, Claims};
 
 const JWT_SECRET: &[u8] = b"super_secret_key_museum_2026";
 
-#[derive(Debug, Serialize, Deserialize)]
-struct Claims {
-    sub: String,
-    exp: usize,
-}
-
+// --- РЕГИСТРАЦИЯ ---
 pub async fn register(
     State(state): State<AppState>,
     Json(payload): Json<RegisterRequest>,
@@ -23,7 +26,6 @@ pub async fn register(
     if payload.validate().is_err() {
         return Err(StatusCode::BAD_REQUEST);
     }
-
 
     let argon2 = Argon2::default();
     let password_hash = argon2
@@ -64,6 +66,7 @@ pub async fn register(
     Ok(Json(AuthResponse { token }))
 }
 
+
 pub async fn login(
     State(state): State<AppState>,
     Json(payload): Json<LoginRequest>,
@@ -103,4 +106,44 @@ pub async fn login(
     .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
     Ok(Json(AuthResponse { token }))
+}
+
+
+pub async fn auth_middleware(
+    mut req: Request,
+    next: Next,
+) -> Result<Response, StatusCode> {
+    let auth_header = req
+        .headers()
+        .get(axum::http::header::AUTHORIZATION)
+        .and_then(|header| header.to_str().ok())
+        .and_then(|header| header.strip_prefix("Bearer "))
+        .ok_or(StatusCode::UNAUTHORIZED)?;
+
+    let token_data = decode::<Claims>(
+        auth_header,
+        &DecodingKey::from_secret(JWT_SECRET),
+        &Validation::default(),
+    )
+    .map_err(|_| StatusCode::UNAUTHORIZED)?;
+
+    req.extensions_mut().insert(token_data.claims.sub);
+    Ok(next.run(req).await)
+}
+
+
+pub async fn get_me(
+    State(state): State<AppState>,
+    Extension(user_id): Extension<String>,
+) -> Result<Json<User>, StatusCode> {
+    let uuid = Uuid::parse_str(&user_id).map_err(|_| StatusCode::BAD_REQUEST)?;
+
+    let user = sqlx::query_as::<_, User>("SELECT * FROM users WHERE id = $1")
+        .bind(uuid)
+        .fetch_optional(&state.db)
+        .await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?
+        .ok_or(StatusCode::NOT_FOUND)?;
+
+    Ok(Json(user))
 }

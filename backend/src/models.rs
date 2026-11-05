@@ -41,3 +41,9 @@ pub struct LoginRequest {
 pub struct AuthResponse {
     pub token: String,
 }
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Claims {
+    pub sub: String,
+    pub exp: usize,  
+}
