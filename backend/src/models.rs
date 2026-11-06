@@ -11,6 +11,7 @@ pub struct Museum {
     pub city: String,
     pub address: String,
     pub founded_year: Option<i32>,
+    pub average_rating: Option<f64>,
 }
 
 #[derive(Debug, Serialize, Deserialize, FromRow)]
@@ -46,4 +47,47 @@ pub struct AuthResponse {
 pub struct Claims {
     pub sub: String,
     pub exp: usize,  
+}
+
+
+#[derive(Debug, Serialize, Deserialize, FromRow)]
+pub struct Comment {
+    pub id: Uuid,
+    pub museum_id: Uuid,
+    pub user_id: Uuid,
+    pub content: String,
+    pub created_at: chrono::DateTime<chrono::Utc>,
+}
+
+
+#[derive(Debug, Deserialize, Validate)]
+pub struct CreateCommentRequest {
+    #[validate(length(min = 1, max = 1000))]
+    pub content: String,
+}
+
+
+#[derive(Debug, Serialize, Deserialize, FromRow)]
+pub struct Review {
+    pub id: Uuid,
+    pub museum_id: Uuid,
+    pub user_id: Uuid,
+    pub rating: i32,
+    pub content: Option<String>,
+    pub created_at: chrono::DateTime<chrono::Utc>,
+}
+
+#[derive(Debug, Deserialize, Validate)]
+pub struct CreateReviewRequest {
+    #[validate(range(min = 1, max = 5))]
+    pub rating: i32,
+    pub content: Option<String>,
+}
+
+
+#[derive(Debug, Serialize, Deserialize, FromRow)]
+pub struct UserResponse {
+    pub id: Uuid,
+    pub username: String,
+    pub email: String,
 }

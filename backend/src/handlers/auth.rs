@@ -14,11 +14,15 @@ use chrono::{Utc, Duration};
 use uuid::Uuid;
 
 use crate::AppState;
-use crate::models::{User, RegisterRequest, LoginRequest, AuthResponse, Claims};
+use crate::models::{User, UserResponse, RegisterRequest, LoginRequest, AuthResponse, Claims};
 
-const JWT_SECRET: &[u8] = b"super_secret_key_museum_2026";
+// Читаем секрет из .env
+fn get_jwt_secret() -> Vec<u8> {
+    std::env::var("JWT_SECRET")
+        .expect("JWT_SECRET must be set in .env")
+        .into_bytes()
+}
 
-// --- РЕГИСТРАЦИЯ ---
 pub async fn register(
     State(state): State<AppState>,
     Json(payload): Json<RegisterRequest>,
@@ -59,13 +63,12 @@ pub async fn register(
     let token = encode(
         &Header::default(),
         &claims,
-        &EncodingKey::from_secret(JWT_SECRET),
+        &EncodingKey::from_secret(&get_jwt_secret()),
     )
     .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
     Ok(Json(AuthResponse { token }))
 }
-
 
 pub async fn login(
     State(state): State<AppState>,
@@ -101,13 +104,12 @@ pub async fn login(
     let token = encode(
         &Header::default(),
         &claims,
-        &EncodingKey::from_secret(JWT_SECRET),
+        &EncodingKey::from_secret(&get_jwt_secret()),
     )
     .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
     Ok(Json(AuthResponse { token }))
 }
-
 
 pub async fn auth_middleware(
     mut req: Request,
@@ -122,7 +124,7 @@ pub async fn auth_middleware(
 
     let token_data = decode::<Claims>(
         auth_header,
-        &DecodingKey::from_secret(JWT_SECRET),
+        &DecodingKey::from_secret(&get_jwt_secret()),
         &Validation::default(),
     )
     .map_err(|_| StatusCode::UNAUTHORIZED)?;
@@ -131,19 +133,20 @@ pub async fn auth_middleware(
     Ok(next.run(req).await)
 }
 
-
 pub async fn get_me(
     State(state): State<AppState>,
     Extension(user_id): Extension<String>,
-) -> Result<Json<User>, StatusCode> {
+) -> Result<Json<UserResponse>, StatusCode> {
     let uuid = Uuid::parse_str(&user_id).map_err(|_| StatusCode::BAD_REQUEST)?;
 
-    let user = sqlx::query_as::<_, User>("SELECT * FROM users WHERE id = $1")
-        .bind(uuid)
-        .fetch_optional(&state.db)
-        .await
-        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?
-        .ok_or(StatusCode::NOT_FOUND)?;
+    let user = sqlx::query_as::<_, UserResponse>(
+        "SELECT id, username, email FROM users WHERE id = $1"
+    )
+    .bind(uuid)
+    .fetch_optional(&state.db)
+    .await
+    .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?
+    .ok_or(StatusCode::NOT_FOUND)?;
 
     Ok(Json(user))
 }
