@@ -47,3 +47,20 @@ pub struct Claims {
     pub sub: String,
     pub exp: usize,  
 }
+
+
+#[derive(Debug, Serialize, Deserialize, FromRow)]
+pub struct Comment {
+    pub id: Uuid,
+    pub museum_id: Uuid,
+    pub user_id: Uuid,
+    pub content: String,
+    pub created_at: chrono::DateTime<chrono::Utc>,
+}
+
+
+#[derive(Debug, Deserialize, Validate)]
+pub struct CreateCommentRequest {
+    #[validate(length(min = 1, max = 1000))]
+    pub content: String,
+}

@@ -18,7 +18,7 @@ use crate::models::{User, RegisterRequest, LoginRequest, AuthResponse, Claims};
 
 const JWT_SECRET: &[u8] = b"super_secret_key_museum_2026";
 
-// --- РЕГИСТРАЦИЯ ---
+
 pub async fn register(
     State(state): State<AppState>,
     Json(payload): Json<RegisterRequest>,
