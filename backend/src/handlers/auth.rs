@@ -13,7 +13,7 @@ use chrono::{Utc, Duration};
 use uuid::Uuid;
 
 use crate::AppState;
-use crate::error::AppError; // <-- Подключаем наш AppError
+use crate::error::AppError; 
 use crate::models::{User, UserResponse, RegisterRequest, LoginRequest, AuthResponse, Claims};
 
 fn get_jwt_secret() -> Vec<u8> {

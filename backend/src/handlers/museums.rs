@@ -8,7 +8,7 @@ use crate::AppState;
 use crate::error::AppError;
 use crate::models::Museum;
 
-// Структура для query-параметров пагинации
+
 #[derive(Deserialize)]
 pub struct Pagination {
     pub page: Option<u32>,
@@ -20,7 +20,7 @@ pub async fn get_museums(
     Query(pagination): Query<Pagination>,
 ) -> Result<Json<Vec<Museum>>, AppError> {
     let page = pagination.page.unwrap_or(1);
-    let limit = pagination.limit.unwrap_or(10); // По умолчанию 10 музеев
+    let limit = pagination.limit.unwrap_or(10); 
     let offset = (page.saturating_sub(1)) * limit;
 
     let museums = sqlx::query_as::<_, Museum>(

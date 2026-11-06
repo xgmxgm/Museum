@@ -3,6 +3,7 @@ use axum::{
     Router,
 };
 use tower_http::cors::CorsLayer;
+use tower_http::trace::TraceLayer; 
 
 mod routes;
 mod handlers;
@@ -21,11 +22,17 @@ pub struct AppState {
 
 #[tokio::main]
 async fn main() {
+    
+    tracing_subscriber::fmt()
+        .with_max_level(tracing::Level::INFO)
+        .with_target(false)
+        .init();
+
     dotenvy::dotenv().ok();
     let config = Config::from_env();
     
     let pool = db::create_pool(&config.database_url).await;
-    println!("✅ Успешно подключились к PostgreSQL");
+    tracing::info!("✅ Успешно подключились к PostgreSQL");
 
     let state = AppState { db: pool };
     
@@ -39,10 +46,13 @@ async fn main() {
             axum::http::header::AUTHORIZATION,
         ]);
 
-    let app = routes::create_router(state).layer(cors);
+    
+    let app = routes::create_router(state)
+        .layer(TraceLayer::new_for_http()) 
+        .layer(cors);
 
-    let addr = std::net::SocketAddr::from(([127, 0, 0, 1], config.port));
-    println!("🚀 Сервер Museum запущен на http://{}", addr);
+    let addr = std::net::SocketAddr::from(([0, 0, 0, 0], config.port)); 
+    tracing::info!("🚀 Сервер Museum запущен на http://{}", addr);
     
     let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
     
@@ -73,5 +83,5 @@ async fn shutdown_signal() {
         _ = terminate => {},
     }
 
-    println!("🛑 Получен сигнал завершения. Сервер останавливается...");
+    tracing::info!("🛑 Получен сигнал завершения. Сервер останавливается...");
 }

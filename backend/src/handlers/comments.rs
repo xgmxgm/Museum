@@ -3,9 +3,9 @@ use axum::{
     Json,
 };
 use uuid::Uuid;
-use validator::Validate; // <-- Добавь для валидации
+use validator::Validate; 
 use crate::AppState;
-use crate::error::AppError; // <-- Подключаем AppError
+use crate::error::AppError; 
 use crate::models::{Comment, CreateCommentRequest};
 
 pub async fn get_comments(
@@ -29,14 +29,14 @@ pub async fn create_comment(
     Extension(user_id): Extension<String>, 
     Json(payload): Json<CreateCommentRequest>,
 ) -> Result<Json<Comment>, AppError> {
-    // 1. Валидация
+    
     payload.validate().map_err(|e| AppError::BadRequest(e.to_string()))?;
 
-    // 2. Парсинг UUID
+    
     let user_uuid = Uuid::parse_str(&user_id)
         .map_err(|_| AppError::BadRequest("Неверный ID пользователя".into()))?;
 
-    // 3. Проверка существования музея
+    
     let museum_exists = sqlx::query("SELECT 1 FROM museums WHERE id = $1")
         .bind(museum_id)
         .fetch_optional(&state.db)
@@ -48,7 +48,7 @@ pub async fn create_comment(
         return Err(AppError::NotFound("Музей не найден".into()));
     }
 
-    // 4. Создание комментария
+    
     let comment = sqlx::query_as::<_, Comment>(
         "INSERT INTO comments (museum_id, user_id, content) VALUES ($1, $2, $3) RETURNING *"
     )

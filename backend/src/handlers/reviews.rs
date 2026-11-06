@@ -29,14 +29,14 @@ pub async fn create_review(
     Extension(user_id): Extension<String>,
     Json(payload): Json<CreateReviewRequest>,
 ) -> Result<Json<Review>, AppError> {
-    // 1. Валидация (рейтинг 1-5)
+    
     payload.validate().map_err(|e| AppError::BadRequest(e.to_string()))?;
 
-    // 2. Парсинг UUID
+    
     let user_uuid = Uuid::parse_str(&user_id)
         .map_err(|_| AppError::BadRequest("Неверный ID пользователя".into()))?;
 
-    // 3. Проверка существования музея
+    
     let museum_exists = sqlx::query("SELECT 1 FROM museums WHERE id = $1")
         .bind(museum_id)
         .fetch_optional(&state.db)
@@ -48,7 +48,7 @@ pub async fn create_review(
         return Err(AppError::NotFound("Музей не найден".into()));
     }
 
-    // 4. Создание отзыва
+    
     let review = sqlx::query_as::<_, Review>(
         "INSERT INTO reviews (museum_id, user_id, rating, content) VALUES ($1, $2, $3, $4) RETURNING *"
     )
