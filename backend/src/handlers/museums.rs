@@ -1,13 +1,28 @@
-use axum::{extract::State, Json, http::StatusCode};
-use axum::extract::Path;
+use axum::{
+    extract::{State, Path, Query},
+    Json,
+};
 use uuid::Uuid;
+use serde::Deserialize;
 use crate::AppState;
+use crate::error::AppError;
 use crate::models::Museum;
 
+// Структура для query-параметров пагинации
+#[derive(Deserialize)]
+pub struct Pagination {
+    pub page: Option<u32>,
+    pub limit: Option<u32>,
+}
 
 pub async fn get_museums(
     State(state): State<AppState>,
-) -> Result<Json<Vec<Museum>>, StatusCode> {
+    Query(pagination): Query<Pagination>,
+) -> Result<Json<Vec<Museum>>, AppError> {
+    let page = pagination.page.unwrap_or(1);
+    let limit = pagination.limit.unwrap_or(10); // По умолчанию 10 музеев
+    let offset = (page.saturating_sub(1)) * limit;
+
     let museums = sqlx::query_as::<_, Museum>(
         r#"
         SELECT 
@@ -16,25 +31,22 @@ pub async fn get_museums(
         FROM museums m
         LEFT JOIN reviews r ON m.id = r.museum_id
         GROUP BY m.id
+        LIMIT $1 OFFSET $2
         "#
     )
+    .bind(limit as i64)
+    .bind(offset as i64)
     .fetch_all(&state.db)
-    .await;
+    .await
+    .map_err(|e| AppError::Internal(e.to_string()))?;
 
-    match museums {
-        Ok(list) => Ok(Json(list)),
-        Err(e) => {
-            eprintln!("Ошибка БД: {}", e);
-            Err(StatusCode::INTERNAL_SERVER_ERROR)
-        }
-    }
+    Ok(Json(museums))
 }
-
 
 pub async fn get_museum_by_id(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
-) -> Result<Json<Museum>, StatusCode> {
+) -> Result<Json<Museum>, AppError> {
     let museum = sqlx::query_as::<_, Museum>(
         r#"
         SELECT 
@@ -48,14 +60,9 @@ pub async fn get_museum_by_id(
     )
     .bind(id)
     .fetch_optional(&state.db)
-    .await;
+    .await
+    .map_err(|e| AppError::Internal(e.to_string()))?
+    .ok_or(AppError::NotFound("Музей не найден".into()))?;
 
-    match museum {
-        Ok(Some(m)) => Ok(Json(m)),
-        Ok(None) => Err(StatusCode::NOT_FOUND),
-        Err(e) => {
-            eprintln!("Ошибка БД: {}", e);
-            Err(StatusCode::INTERNAL_SERVER_ERROR)
-        }
-    }
+    Ok(Json(museum))
 }
