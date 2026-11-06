@@ -83,3 +83,11 @@ pub struct CreateReviewRequest {
     pub rating: i32,
     pub content: Option<String>,
 }
+
+
+#[derive(Debug, Serialize, Deserialize, FromRow)]
+pub struct UserResponse {
+    pub id: Uuid,
+    pub username: String,
+    pub email: String,
+}
