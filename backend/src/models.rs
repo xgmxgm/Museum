@@ -64,3 +64,21 @@ pub struct CreateCommentRequest {
     #[validate(length(min = 1, max = 1000))]
     pub content: String,
 }
+
+
+#[derive(Debug, Serialize, Deserialize, FromRow)]
+pub struct Review {
+    pub id: Uuid,
+    pub museum_id: Uuid,
+    pub user_id: Uuid,
+    pub rating: i32,
+    pub content: Option<String>,
+    pub created_at: chrono::DateTime<chrono::Utc>,
+}
+
+#[derive(Debug, Deserialize, Validate)]
+pub struct CreateReviewRequest {
+    #[validate(range(min = 1, max = 5))]
+    pub rating: i32,
+    pub content: Option<String>,
+}
