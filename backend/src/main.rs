@@ -1,6 +1,5 @@
 use axum::{
     http::{HeaderValue, Method},
-    Router,
 };
 use tower_http::cors::CorsLayer;
 use tower_http::trace::TraceLayer; 
@@ -18,7 +17,9 @@ use crate::config::Config;
 #[derive(Clone)]
 pub struct AppState {
     pub db: PgPool,
+    pub jwt_secret: String,
 }
+
 
 #[tokio::main]
 async fn main() {
@@ -34,7 +35,10 @@ async fn main() {
     let pool = db::create_pool(&config.database_url).await;
     tracing::info!("✅ Успешно подключились к PostgreSQL");
 
-    let state = AppState { db: pool };
+        let state = AppState { 
+        db: pool,
+        jwt_secret: config.jwt_secret.clone(), 
+    };
     
     let cors = CorsLayer::new()
         .allow_origin(config.frontend_url.parse::<HeaderValue>().unwrap()) 
