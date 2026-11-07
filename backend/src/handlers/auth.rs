@@ -7,7 +7,6 @@ use axum::{
 use argon2::{Argon2, PasswordHasher, PasswordVerifier};
 use argon2::password_hash::phc::PasswordHash;
 use jsonwebtoken::{encode, decode, EncodingKey, DecodingKey, Header, Validation};
-use serde::{Deserialize, Serialize};
 use validator::Validate;
 use chrono::{Utc, Duration};
 use uuid::Uuid;
@@ -16,11 +15,7 @@ use crate::AppState;
 use crate::error::AppError; 
 use crate::models::{User, UserResponse, RegisterRequest, LoginRequest, AuthResponse, Claims};
 
-fn get_jwt_secret() -> Vec<u8> {
-    std::env::var("JWT_SECRET")
-        .expect("JWT_SECRET must be set in .env")
-        .into_bytes()
-}
+
 
 pub async fn register(
     State(state): State<AppState>,
@@ -65,7 +60,7 @@ pub async fn register(
     let token = encode(
         &Header::default(),
         &claims,
-        &EncodingKey::from_secret(&get_jwt_secret()),
+        &EncodingKey::from_secret(state.jwt_secret.as_bytes()),
     )
     .map_err(|_| AppError::Internal("Ошибка генерации токена".into()))?;
 
@@ -106,7 +101,7 @@ pub async fn login(
     let token = encode(
         &Header::default(),
         &claims,
-        &EncodingKey::from_secret(&get_jwt_secret()),
+        &EncodingKey::from_secret(state.jwt_secret.as_bytes()),
     )
     .map_err(|_| AppError::Internal("Ошибка генерации токена".into()))?;
 
@@ -152,4 +147,10 @@ pub async fn get_me(
     .ok_or(AppError::NotFound("Пользователь не найден".into()))?;
 
     Ok(Json(user))
+}
+
+fn get_jwt_secret() -> Vec<u8> {
+    std::env::var("JWT_SECRET")
+        .expect("JWT_SECRET must be set in .env")
+        .into_bytes()
 }
