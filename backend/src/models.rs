@@ -12,6 +12,8 @@ pub struct Museum {
     pub address: String,
     pub founded_year: Option<i32>,
     pub average_rating: Option<f64>,
+    pub image_url: Option<String>,
+    pub two_gis_url: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize, FromRow)]

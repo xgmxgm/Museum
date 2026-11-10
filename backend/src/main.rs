@@ -3,6 +3,7 @@ use axum::{
 };
 use tower_http::cors::CorsLayer;
 use tower_http::trace::TraceLayer; 
+use tower_http::services::ServeDir; // <-- Для раздачи статики
 
 mod routes;
 mod handlers;
@@ -20,10 +21,8 @@ pub struct AppState {
     pub jwt_secret: String,
 }
 
-
 #[tokio::main]
 async fn main() {
-    
     tracing_subscriber::fmt()
         .with_max_level(tracing::Level::INFO)
         .with_target(false)
@@ -35,7 +34,7 @@ async fn main() {
     let pool = db::create_pool(&config.database_url).await;
     tracing::info!("✅ Успешно подключились к PostgreSQL");
 
-        let state = AppState { 
+    let state = AppState { 
         db: pool,
         jwt_secret: config.jwt_secret.clone(), 
     };
@@ -50,8 +49,9 @@ async fn main() {
             axum::http::header::AUTHORIZATION,
         ]);
 
-    
+    // ВОТ ЗДЕСЬ ДОЛЖНА БЫТЬ СТРОЧКА С APP
     let app = routes::create_router(state)
+        .nest_service("/static", ServeDir::new("static")) // <-- Раздача статики
         .layer(TraceLayer::new_for_http()) 
         .layer(cors);
 
