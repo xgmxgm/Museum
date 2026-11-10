@@ -1,13 +1,10 @@
 import type { FC } from 'react'
-import { useTranslation } from 'react-i18next'
+import { Welcome } from '../../widgets/welcome'
 
 export const HomePage: FC = () => {
-	const { t } = useTranslation()
-
 	return (
 		<div>
-			home page
-			<p>{t('test')}</p>
+			<Welcome />
 		</div>
 	)
 }
