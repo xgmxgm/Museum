@@ -16,6 +16,11 @@ export const router = createBrowserRouter([
 	},
 	{
 		path: '/authorize',
-		element: <AuthorizePage />,
+		element: (
+			<>
+				<Header />
+				<AuthorizePage />
+			</>
+		),
 	},
 ])
