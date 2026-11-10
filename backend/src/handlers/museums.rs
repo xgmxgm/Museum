@@ -8,7 +8,6 @@ use crate::AppState;
 use crate::error::AppError;
 use crate::models::Museum;
 
-
 #[derive(Deserialize)]
 pub struct Pagination {
     pub page: Option<u32>,
@@ -27,6 +26,7 @@ pub async fn get_museums(
         r#"
         SELECT 
             m.id, m.name, m.description, m.city, m.address, m.founded_year,
+            m.image_url, m.two_gis_url, -- <-- ДОБАВИЛИ ЭТИ ДВА ПОЛЯ
             AVG(r.rating)::float8 as average_rating
         FROM museums m
         LEFT JOIN reviews r ON m.id = r.museum_id
@@ -51,6 +51,7 @@ pub async fn get_museum_by_id(
         r#"
         SELECT 
             m.id, m.name, m.description, m.city, m.address, m.founded_year,
+            m.image_url, m.two_gis_url, -- <-- ДОБАВИЛИ ЭТИ ДВА ПОЛЯ
             AVG(r.rating)::float8 as average_rating
         FROM museums m
         LEFT JOIN reviews r ON m.id = r.museum_id
