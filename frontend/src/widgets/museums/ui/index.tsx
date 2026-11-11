@@ -12,7 +12,8 @@ export const Museums: FC = () => {
 	useEffect(() => {
 		const fetchMuseums = async () => {
 			try {
-				const res = await api.get('/museums')
+				// const res = await api.get('/museums')
+				const res = await api.get('/mock/museums.json')
 				setMuseums(res.data)
 			} catch (e) {
 				console.error(e)
