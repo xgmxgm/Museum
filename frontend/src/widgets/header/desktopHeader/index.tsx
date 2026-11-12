@@ -1,8 +1,8 @@
-import { Select } from 'antd'
 import type { FC } from 'react'
 import { Link } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { Logo } from '../../../shared/ui/Logo'
+import { Select } from '../../../shared/ui/Select'
 
 export const DesktopHeader: FC = () => {
 	const { t, i18n } = useTranslation()
@@ -20,11 +20,11 @@ export const DesktopHeader: FC = () => {
 				<div className='flex gap-5 justify-center items-center'>
 					<Link to={{ pathname: '/Authorize' }}>{t('signIn')}</Link>
 					<Select
-						onSelect={changeLanguage}
 						defaultValue='kz'
+						onChange={e => changeLanguage(e.target.value)}
 						options={[
 							{ value: 'kz', label: 'KZ' },
-							{ value: 'ru', label: 'RU' },
+							{ value: 'ru', label: 'RU', selected: true },
 						]}
 					/>
 				</div>
