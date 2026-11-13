@@ -12,16 +12,14 @@ use chrono::{Utc, Duration};
 use uuid::Uuid;
 
 use crate::AppState;
-use crate::error::AppError; 
+use crate::error::AppError;
 use crate::models::{User, UserResponse, RegisterRequest, LoginRequest, AuthResponse, Claims};
 
-
-
+// --- РЕГИСТРАЦИЯ ---
 pub async fn register(
     State(state): State<AppState>,
     Json(payload): Json<RegisterRequest>,
 ) -> Result<Json<AuthResponse>, AppError> {
-    
     payload.validate().map_err(|e| AppError::BadRequest(e.to_string()))?;
 
     let argon2 = Argon2::default();
@@ -39,7 +37,6 @@ pub async fn register(
     .fetch_one(&state.db)
     .await
     .map_err(|e| {
-        
         if e.to_string().contains("duplicate key") {
             AppError::Conflict("Пользователь с таким email или username уже существует".into())
         } else {
@@ -55,6 +52,7 @@ pub async fn register(
     let claims = Claims {
         sub: user.id.to_string(),
         exp: expiration,
+        jti: Uuid::new_v4(), // <-- уникальный ID токена
     };
 
     let token = encode(
@@ -67,6 +65,7 @@ pub async fn register(
     Ok(Json(AuthResponse { token }))
 }
 
+// --- ЛОГИН ---
 pub async fn login(
     State(state): State<AppState>,
     Json(payload): Json<LoginRequest>,
@@ -76,7 +75,7 @@ pub async fn login(
         .fetch_optional(&state.db)
         .await
         .map_err(|e| AppError::Internal(e.to_string()))?
-        .ok_or(AppError::Unauthorized)?; // Если не нашли — 401
+        .ok_or(AppError::Unauthorized)?;
 
     let parsed_hash = PasswordHash::new(&user.password_hash)
         .map_err(|_| AppError::Internal("Ошибка парсинга хеша".into()))?;
@@ -96,6 +95,7 @@ pub async fn login(
     let claims = Claims {
         sub: user.id.to_string(),
         exp: expiration,
+        jti: Uuid::new_v4(), // <-- уникальный ID токена
     };
 
     let token = encode(
@@ -108,10 +108,12 @@ pub async fn login(
     Ok(Json(AuthResponse { token }))
 }
 
+// --- MIDDLEWARE (с State + проверка blacklist) ---
 pub async fn auth_middleware(
+    State(state): State<AppState>,
     mut req: Request,
     next: Next,
-) -> Result<Response, AppError> { // <-- Теперь AppError
+) -> Result<Response, AppError> {
     let auth_header = req
         .headers()
         .get(axum::http::header::AUTHORIZATION)
@@ -121,15 +123,51 @@ pub async fn auth_middleware(
 
     let token_data = decode::<Claims>(
         auth_header,
-        &DecodingKey::from_secret(&get_jwt_secret()),
+        &DecodingKey::from_secret(state.jwt_secret.as_bytes()),
         &Validation::default(),
     )
     .map_err(|_| AppError::Unauthorized)?;
 
+    // Проверка blacklist: если jti в revoked_tokens — токен отозван
+    let is_revoked = sqlx::query("SELECT 1 FROM revoked_tokens WHERE jti = $1")
+        .bind(token_data.claims.jti)
+        .fetch_optional(&state.db)
+        .await
+        .map_err(|e| AppError::Internal(e.to_string()))?
+        .is_some();
+
+    if is_revoked {
+        return Err(AppError::Unauthorized);
+    }
+
+    // Сохраняем sub и jti в расширениях запроса (для logout и get_me)
     req.extensions_mut().insert(token_data.claims.sub);
+    req.extensions_mut().insert(token_data.claims.jti);
+
     Ok(next.run(req).await)
 }
 
+// --- LOGOUT (отзыв токена) ---
+pub async fn logout(
+    State(state): State<AppState>,
+    Extension(jti): Extension<Uuid>,
+) -> Result<(), AppError> {
+    // expires_at = сейчас + 24 часа (как и у токена)
+    let expires_at = Utc::now() + Duration::hours(24);
+
+    sqlx::query(
+        "INSERT INTO revoked_tokens (jti, expires_at) VALUES ($1, $2) ON CONFLICT (jti) DO NOTHING"
+    )
+    .bind(jti)
+    .bind(expires_at)
+    .execute(&state.db)
+    .await
+    .map_err(|e| AppError::Internal(e.to_string()))?;
+
+    Ok(())
+}
+
+// --- GET_ME ---
 pub async fn get_me(
     State(state): State<AppState>,
     Extension(user_id): Extension<String>,
@@ -147,10 +185,4 @@ pub async fn get_me(
     .ok_or(AppError::NotFound("Пользователь не найден".into()))?;
 
     Ok(Json(user))
-}
-
-fn get_jwt_secret() -> Vec<u8> {
-    std::env::var("JWT_SECRET")
-        .expect("JWT_SECRET must be set in .env")
-        .into_bytes()
 }

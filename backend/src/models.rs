@@ -50,9 +50,9 @@ pub struct AuthResponse {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Claims {
     pub sub: String,
-    pub exp: usize,  
+    pub exp: usize,
+    pub jti: Uuid,   // <-- уникальный ID токена (для blacklist)
 }
-
 
 #[derive(Debug, Serialize, Deserialize, FromRow)]
 pub struct Comment {
@@ -63,13 +63,11 @@ pub struct Comment {
     pub created_at: chrono::DateTime<chrono::Utc>,
 }
 
-
 #[derive(Debug, Deserialize, Validate)]
 pub struct CreateCommentRequest {
     #[validate(length(min = 1, max = 1000))]
     pub content: String,
 }
-
 
 #[derive(Debug, Serialize, Deserialize, FromRow)]
 pub struct Review {
@@ -87,7 +85,6 @@ pub struct CreateReviewRequest {
     pub rating: i32,
     pub content: Option<String>,
 }
-
 
 #[derive(Debug, Serialize, Deserialize, FromRow)]
 pub struct UserResponse {
