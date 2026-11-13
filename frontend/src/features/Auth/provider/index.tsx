@@ -63,6 +63,7 @@ export const AuthProvider: FC<PropsWithChildren> = ({ children }) => {
 	}
 
 	const logout = async () => {
+		console.log('work')
 		await api.get('/auth/logout').then(() => {
 			setUser(null)
 			setIsAuth(false)

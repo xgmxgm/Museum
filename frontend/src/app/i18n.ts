@@ -5,7 +5,7 @@ import LanguageDetector from 'i18next-browser-languagedetector'
 
 i18n
 	.use(HttpBackend) // load translations from public/locales
-	.use(LanguageDetector) // detect user language
+	// .use(LanguageDetector) // detect user language
 	.use(initReactI18next) // pass i18n instance to react-i18next
 	.init({
 		fallbackLng: 'kz',

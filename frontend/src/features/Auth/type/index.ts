@@ -23,6 +23,6 @@ export interface IAuthContext {
 		repeatPassword: string,
 		setIsLoading: (isLoading: boolean) => void,
 	) => void
-	logout: (setIsLoading: (isLoading: boolean) => void) => void
+	logout: () => void
 	user: User | null
 }

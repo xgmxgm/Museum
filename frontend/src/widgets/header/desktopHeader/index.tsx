@@ -6,7 +6,7 @@ import { Select } from '../../../shared/ui/Select'
 import { useAuthContext } from '../../../features/Auth/context'
 
 export const DesktopHeader: FC = () => {
-	const { isAuth, user } = useAuthContext()
+	const { isAuth, user, logout } = useAuthContext()
 
 	const { t, i18n } = useTranslation()
 
@@ -26,7 +26,12 @@ export const DesktopHeader: FC = () => {
 				</Link>
 				<div className='flex gap-5 justify-center items-center'>
 					{isAuth ? (
-						user?.user.username
+						<div className='flex items-center justify-center gap-5'>
+							<p>{user?.user.username}</p>
+							<button className='cursor-pointer' onClick={() => logout()}>
+								{t('exit')}
+							</button>
+						</div>
 					) : (
 						<Link to={{ pathname: '/Authorize' }}>{t('signIn')}</Link>
 					)}
