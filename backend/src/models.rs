@@ -42,16 +42,18 @@ pub struct LoginRequest {
     pub password: String,
 }
 
+// Ответ теперь содержит и токен, и данные пользователя
 #[derive(Debug, Serialize)]
 pub struct AuthResponse {
     pub token: String,
+    pub user: UserResponse,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Claims {
     pub sub: String,
     pub exp: usize,
-    pub jti: Uuid,   // <-- уникальный ID токена (для blacklist)
+    pub jti: Uuid,
 }
 
 #[derive(Debug, Serialize, Deserialize, FromRow)]

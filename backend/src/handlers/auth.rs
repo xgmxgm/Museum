@@ -52,7 +52,7 @@ pub async fn register(
     let claims = Claims {
         sub: user.id.to_string(),
         exp: expiration,
-        jti: Uuid::new_v4(), // <-- уникальный ID токена
+        jti: Uuid::new_v4(),
     };
 
     let token = encode(
@@ -62,7 +62,17 @@ pub async fn register(
     )
     .map_err(|_| AppError::Internal("Ошибка генерации токена".into()))?;
 
-    Ok(Json(AuthResponse { token }))
+    // Возвращаем и токен, и данные пользователя (без password_hash)
+    let user_response = UserResponse {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+    };
+
+    Ok(Json(AuthResponse {
+        token,
+        user: user_response,
+    }))
 }
 
 // --- ЛОГИН ---
@@ -95,7 +105,7 @@ pub async fn login(
     let claims = Claims {
         sub: user.id.to_string(),
         exp: expiration,
-        jti: Uuid::new_v4(), // <-- уникальный ID токена
+        jti: Uuid::new_v4(),
     };
 
     let token = encode(
@@ -105,7 +115,17 @@ pub async fn login(
     )
     .map_err(|_| AppError::Internal("Ошибка генерации токена".into()))?;
 
-    Ok(Json(AuthResponse { token }))
+    // Возвращаем и токен, и данные пользователя (без password_hash)
+    let user_response = UserResponse {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+    };
+
+    Ok(Json(AuthResponse {
+        token,
+        user: user_response,
+    }))
 }
 
 // --- MIDDLEWARE (с State + проверка blacklist) ---
@@ -128,7 +148,6 @@ pub async fn auth_middleware(
     )
     .map_err(|_| AppError::Unauthorized)?;
 
-    // Проверка blacklist: если jti в revoked_tokens — токен отозван
     let is_revoked = sqlx::query("SELECT 1 FROM revoked_tokens WHERE jti = $1")
         .bind(token_data.claims.jti)
         .fetch_optional(&state.db)
@@ -140,7 +159,6 @@ pub async fn auth_middleware(
         return Err(AppError::Unauthorized);
     }
 
-    // Сохраняем sub и jti в расширениях запроса (для logout и get_me)
     req.extensions_mut().insert(token_data.claims.sub);
     req.extensions_mut().insert(token_data.claims.jti);
 
@@ -152,7 +170,6 @@ pub async fn logout(
     State(state): State<AppState>,
     Extension(jti): Extension<Uuid>,
 ) -> Result<(), AppError> {
-    // expires_at = сейчас + 24 часа (как и у токена)
     let expires_at = Utc::now() + Duration::hours(24);
 
     sqlx::query(
