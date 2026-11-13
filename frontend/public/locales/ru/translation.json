@@ -6,5 +6,8 @@
 	"email": "Электронная почта",
 	"password": "Пароль",
 	"backToHome": "Вернуться на главную",
-	"repeatPassword": "Повторите пароль"
+	"repeatPassword": "Повторите пароль",
+	"allRightsReserved": "Все права защищены",
+	"openIn": "Открыть в",
+	"userName": "Имя пользователя"
 }

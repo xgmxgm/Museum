@@ -1,9 +1,18 @@
-import { useState, type FC } from 'react'
+import { useEffect, useState, type FC } from 'react'
 import { SignIn } from './ui/signIn'
 import { SignUp } from './ui/signUp'
+import { useAuthContext } from '../../features/Auth/context'
+import { useNavigate } from 'react-router'
 
 export const AuthorizePage: FC = () => {
 	const [isSignIn, setIsSignIn] = useState<boolean>(true)
+
+	const { isAuth } = useAuthContext()
+	const navigate = useNavigate()
+
+	useEffect(() => {
+		if (isAuth) navigate('/')
+	}, [isAuth])
 
 	return (
 		<div className="bg-[url('./images/mainBackground.png')] bg-cover bg-center h-screen flex justify-center">

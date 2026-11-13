@@ -1,7 +1,7 @@
-import { useState, type FC, type PropsWithChildren } from 'react'
-import { AuthContext } from '../context'
 import type { User } from '../type'
-import axios from 'axios'
+import { AuthContext } from '../context'
+import { api } from '../../../shared/libs/axios'
+import { useState, type FC, type PropsWithChildren } from 'react'
 import { useNotificationContext } from '../../Notification/context'
 
 export const AuthProvider: FC<PropsWithChildren> = ({ children }) => {
@@ -10,15 +10,23 @@ export const AuthProvider: FC<PropsWithChildren> = ({ children }) => {
 	const [user, setUser] = useState<User | null>(null)
 
 	const registerUserWithEmailAndPassword = async (
+		username: string,
 		email: string,
 		password: string,
+		repeatPassword: string,
 		setIsLoading: (IsLoading: boolean) => void,
 	) => {
+		if (password !== repeatPassword) {
+			setNotification('passwords not equals')
+			return
+		}
+
 		setIsLoading(true)
 
-		await axios
-			.post('/signup', { email, password })
-			.then(() => {
+		await api
+			.post('/auth/register', { username, email, password })
+			.then(res => {
+				setUser(res.data)
 				setIsAuth(true)
 				setNotification('Successfully register')
 			})
@@ -38,9 +46,10 @@ export const AuthProvider: FC<PropsWithChildren> = ({ children }) => {
 	) => {
 		setIsLoading(true)
 
-		await axios
-			.post('/signin', { email, password })
-			.then(() => {
+		await api
+			.post('/auth/login', { email, password })
+			.then(res => {
+				setUser(res.data)
 				setIsAuth(true)
 				setNotification('Successfully login')
 			})
@@ -54,7 +63,7 @@ export const AuthProvider: FC<PropsWithChildren> = ({ children }) => {
 	}
 
 	const logout = async () => {
-		await axios.get('/logout').then(() => {
+		await api.get('/auth/logout').then(() => {
 			setUser(null)
 			setIsAuth(false)
 		})

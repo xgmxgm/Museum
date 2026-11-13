@@ -1,8 +1,12 @@
-export type User = {
-	id: number
+export interface UserData {
+	id: string
+	username: string
 	email: string
-	firstName: string
-	lastName: string
+}
+
+export type User = {
+	token: string
+	user: UserData
 }
 
 export interface IAuthContext {
@@ -13,8 +17,10 @@ export interface IAuthContext {
 		setIsLoading: (isLoading: boolean) => void,
 	) => void
 	registerUserWithEmailAndPassword: (
+		username: string,
 		email: string,
 		password: string,
+		repeatPassword: string,
 		setIsLoading: (isLoading: boolean) => void,
 	) => void
 	logout: (setIsLoading: (isLoading: boolean) => void) => void

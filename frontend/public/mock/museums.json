@@ -1,12 +1,14 @@
 [
 	{
-		"id": "1d3dbfdc-6b21-4613-b12a-4981b863e9bb",
-		"name": "Музей Сакена Сейфуллина",
-		"description": "Музей поэта и государственного деятеля Сакена Сейфуллина.",
+		"id": "7722450b-6fcc-4a41-80f5-28947df12944",
+		"name": "Музей Ахмета Байтурсынова",
+		"description": "Музей выдающегося казахского просветителя и лингвиста.",
 		"city": "Алматы",
-		"address": "ул. Сейфуллина, 30",
-		"founded_year": 1975,
-		"average_rating": null
+		"address": "ул. Байтурсынова, 50",
+		"founded_year": 1998,
+		"average_rating": null,
+		"image_url": "https://vast-environmental-enhancing-donations.trycloudflare.com/static/Ahmet.jpg",
+		"two_gis_url": "https://2gis.kz/almaty/firm/9429940000842540"
 	},
 	{
 		"id": "5236b8bd-79e4-4b67-827b-d4e6a6c79682",
@@ -15,25 +17,20 @@
 		"city": "Алматы",
 		"address": "ул. Абая, 10",
 		"founded_year": 1940,
-		"average_rating": null
+		"average_rating": null,
+		"image_url": "https://vast-environmental-enhancing-donations.trycloudflare.com/static/Abaya.jpg",
+		"two_gis_url": "https://2gis.kz/semey/firm/70000001075854619"
 	},
 	{
-		"id": "76025858-6da7-4086-aeaa-58c1988fbb14",
-		"name": "Музей Габита Мусрепова",
-		"description": "Литературно-мемориальный музей писателя Габита Мусрепова.",
+		"id": "1d3dbfdc-6b21-4613-b12a-4981b863e9bb",
+		"name": "Музей Сакена Сейфуллина",
+		"description": "Музей поэта и государственного деятеля Сакена Сейфуллина.",
 		"city": "Алматы",
-		"address": "ул. Мусрепова, 15",
-		"founded_year": 1985,
-		"average_rating": null
-	},
-	{
-		"id": "7722450b-6fcc-4a41-80f5-28947df12944",
-		"name": "Музей Ахмета Байтурсынова",
-		"description": "Музей выдающегося казахского просветителя и лингвиста.",
-		"city": "Алматы",
-		"address": "ул. Байтурсынова, 50",
-		"founded_year": 1998,
-		"average_rating": null
+		"address": "ул. Сейфуллина, 30",
+		"founded_year": 1975,
+		"average_rating": null,
+		"image_url": "https://vast-environmental-enhancing-donations.trycloudflare.com/static/Saken.jpg",
+		"two_gis_url": "https://2gis.kz/astana/firm/70000001018106112"
 	},
 	{
 		"id": "f84a917f-dc7e-489c-9854-8a4ccc486eaf",
@@ -42,6 +39,19 @@
 		"city": "Алматы",
 		"address": "ул. Ауэзова, 20",
 		"founded_year": 1963,
-		"average_rating": null
+		"average_rating": null,
+		"image_url": "https://vast-environmental-enhancing-donations.trycloudflare.com/static/Muhtar.jpg",
+		"two_gis_url": "https://2gis.kz/almaty/firm/9429940000798479"
+	},
+	{
+		"id": "76025858-6da7-4086-aeaa-58c1988fbb14",
+		"name": "Музей Габита Мусрепова",
+		"description": "Литературно-мемориальный музей писателя Габита Мусрепова.",
+		"city": "Алматы",
+		"address": "ул. Мусрепова, 15",
+		"founded_year": 1985,
+		"average_rating": null,
+		"image_url": "https://vast-environmental-enhancing-donations.trycloudflare.com/static/Gabit.jpg",
+		"two_gis_url": "https://2gis.kz/almaty/firm/9429940000797436"
 	}
 ]

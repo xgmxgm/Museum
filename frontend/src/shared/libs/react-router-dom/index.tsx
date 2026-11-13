@@ -2,6 +2,8 @@ import { createBrowserRouter } from 'react-router'
 import { Header } from '../../../widgets/header'
 import { HomePage } from '../../../pages/Home'
 import { AuthorizePage } from '../../../pages/Authorize'
+import { Footer } from '../../../widgets/footer'
+import { MuseumPage } from '../../../pages/Museum'
 
 export const router = createBrowserRouter([
 	{
@@ -11,6 +13,7 @@ export const router = createBrowserRouter([
 			<>
 				<Header />
 				<HomePage />
+				<Footer />
 			</>
 		),
 	},
@@ -20,6 +23,15 @@ export const router = createBrowserRouter([
 			<>
 				<Header />
 				<AuthorizePage />
+			</>
+		),
+	},
+	{
+		path: '/museum/:id',
+		element: (
+			<>
+				<Header />
+				<MuseumPage />
 			</>
 		),
 	},
