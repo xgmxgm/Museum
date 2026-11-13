@@ -15,7 +15,7 @@ use crate::AppState;
 use crate::error::AppError;
 use crate::models::{User, UserResponse, RegisterRequest, LoginRequest, AuthResponse, Claims};
 
-// --- РЕГИСТРАЦИЯ ---
+
 pub async fn register(
     State(state): State<AppState>,
     Json(payload): Json<RegisterRequest>,
@@ -62,7 +62,7 @@ pub async fn register(
     )
     .map_err(|_| AppError::Internal("Ошибка генерации токена".into()))?;
 
-    // Возвращаем и токен, и данные пользователя (без password_hash)
+    
     let user_response = UserResponse {
         id: user.id,
         username: user.username,
@@ -75,7 +75,7 @@ pub async fn register(
     }))
 }
 
-// --- ЛОГИН ---
+
 pub async fn login(
     State(state): State<AppState>,
     Json(payload): Json<LoginRequest>,
@@ -115,7 +115,7 @@ pub async fn login(
     )
     .map_err(|_| AppError::Internal("Ошибка генерации токена".into()))?;
 
-    // Возвращаем и токен, и данные пользователя (без password_hash)
+    
     let user_response = UserResponse {
         id: user.id,
         username: user.username,
@@ -128,7 +128,7 @@ pub async fn login(
     }))
 }
 
-// --- MIDDLEWARE (с State + проверка blacklist) ---
+
 pub async fn auth_middleware(
     State(state): State<AppState>,
     mut req: Request,
@@ -165,7 +165,7 @@ pub async fn auth_middleware(
     Ok(next.run(req).await)
 }
 
-// --- LOGOUT (отзыв токена) ---
+
 pub async fn logout(
     State(state): State<AppState>,
     Extension(jti): Extension<Uuid>,

@@ -42,7 +42,7 @@ pub struct LoginRequest {
     pub password: String,
 }
 
-// Ответ теперь содержит и токен, и данные пользователя
+
 #[derive(Debug, Serialize)]
 pub struct AuthResponse {
     pub token: String,

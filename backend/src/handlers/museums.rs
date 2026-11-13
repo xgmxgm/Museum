@@ -46,7 +46,7 @@ pub async fn get_museums(
     let response: Vec<serde_json::Value> = museums
         .into_iter()
         .map(|m| {
-            // ТЕПЕРЬ МЫ ПЕРЕВОДИМ ВСЁ: НАЗВАНИЕ, ОПИСАНИЕ, ГОРОД, АДРЕС
+            
             let (kz_name, kz_desc, ru_city, kz_city, ru_addr, kz_addr) = match m.name.as_str() {
                 "Музей Абая" => (
                     "Абай мұражайы",
@@ -92,8 +92,8 @@ pub async fn get_museums(
                 "id": m.id,
                 "name": name,
                 "description": description,
-                "city": city,           // <-- Теперь берем из перевода
-                "address": address,     // <-- Теперь берем из перевода
+                "city": city,           
+                "address": address,     
                 "founded_year": m.founded_year,
                 "average_rating": m.average_rating,
                 "image_url": m.image_url,
@@ -131,7 +131,7 @@ pub async fn get_museum_by_id(
     .map_err(|e| AppError::Internal(e.to_string()))?
     .ok_or(AppError::NotFound("Музей не найден".into()))?;
 
-    // ТЕПЕРЬ МЫ ПЕРЕВОДИМ ВСЁ: НАЗВАНИЕ, ОПИСАНИЕ, ГОРОД, АДРЕС
+    
     let (kz_name, kz_desc, ru_city, kz_city, ru_addr, kz_addr) = match museum.name.as_str() {
         "Музей Абая" => (
             "Абай мұражайы",
