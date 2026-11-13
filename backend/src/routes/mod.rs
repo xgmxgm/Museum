@@ -12,8 +12,8 @@ pub fn create_router(state: AppState) -> Router {
         .route("/", axum::routing::get(|| async { "Museum API работает!" }))
         .merge(health::health_routes())
         .merge(museums::museum_routes())
-        .merge(auth::auth_routes())
-        .merge(comments::comment_routes())
-        .merge(reviews::review_routes())
+        .merge(auth::auth_routes(state.clone()))
+        .merge(comments::comment_routes(state.clone()))
+        .merge(reviews::review_routes(state.clone()))
         .with_state(state)
 }
