@@ -7,7 +7,9 @@ use validator::Validate;
 pub struct Museum {
     pub id: Uuid,
     pub name: String,
+    pub name_kz: Option<String>,
     pub description: String,
+    pub description_kz: Option<String>,
     pub city: String,
     pub address: String,
     pub founded_year: Option<i32>,
