@@ -9,6 +9,10 @@
 	.glass-effect {
 		@apply bg-opacity-white backdrop-blur-xs;
 	}
+
+	.bg-welcome-img {
+		@apply bg-[url('./images/mainBackground.png')];
+	}
 }
 
 html {

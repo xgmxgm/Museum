@@ -1,7 +1,8 @@
-import { useEffect, type FC } from 'react'
+import { type FC } from 'react'
 import { Link } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { Logo } from '../../../shared/ui/Logo'
+import { IoExitOutline } from 'react-icons/io5'
 import { Select } from '../../../shared/ui/Select'
 import { useAuthContext } from '../../../features/Auth/context'
 
@@ -14,10 +15,6 @@ export const DesktopHeader: FC = () => {
 		i18n.changeLanguage(lng)
 	}
 
-	useEffect(() => {
-		console.log('user: ', user)
-	})
-
 	return (
 		<div className='w-full flex items-center justify-center fixed top-3 z-10'>
 			<div className='p-7 rounded-lg w-11/12 flex items-center justify-between glass-effect'>
@@ -28,8 +25,12 @@ export const DesktopHeader: FC = () => {
 					{isAuth ? (
 						<div className='flex items-center justify-center gap-5'>
 							<p>{user?.user.username}</p>
-							<button className='cursor-pointer' onClick={() => logout()}>
+							<button
+								className='cursor-pointer flex items-center gap-2'
+								onClick={() => logout()}
+							>
 								{t('exit')}
+								<IoExitOutline size={20} />
 							</button>
 						</div>
 					) : (

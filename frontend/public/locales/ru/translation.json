@@ -10,5 +10,12 @@
 	"allRightsReserved": "Все права защищены",
 	"openIn": "Открыть в",
 	"userName": "Имя пользователя",
-	"exit": "Выход"
+	"exit": "Выход",
+	"comment": "Комментарий",
+	"learnMore": "Узнать больше",
+	"send": "Отправить",
+	"noComment": "Без комментариев",
+	"successfullyRegister": "Успешно зарегистрироваться",
+	"successfullyLogin": "Вход выполнен успешно",
+	"navigation": "Навигация"
 }

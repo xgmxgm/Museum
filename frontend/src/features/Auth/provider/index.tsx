@@ -1,7 +1,7 @@
 import type { User } from '../type'
 import { AuthContext } from '../context'
 import { api } from '../../../shared/libs/axios'
-import { useState, type FC, type PropsWithChildren } from 'react'
+import { useEffect, useState, type FC, type PropsWithChildren } from 'react'
 import { useNotificationContext } from '../../Notification/context'
 
 export const AuthProvider: FC<PropsWithChildren> = ({ children }) => {
@@ -26,12 +26,13 @@ export const AuthProvider: FC<PropsWithChildren> = ({ children }) => {
 		await api
 			.post('/auth/register', { username, email, password })
 			.then(res => {
+				localStorage.setItem('token', res.data.token)
 				setUser(res.data)
 				setIsAuth(true)
-				setNotification('Successfully register')
+				setNotification('successfullyRegister')
 			})
 			.catch(e => {
-				console.log('e: ', e)
+				console.log(e)
 				setNotification(e.message)
 			})
 			.finally(() => {
@@ -49,12 +50,13 @@ export const AuthProvider: FC<PropsWithChildren> = ({ children }) => {
 		await api
 			.post('/auth/login', { email, password })
 			.then(res => {
+				localStorage.setItem('token', res.data.token)
 				setUser(res.data)
 				setIsAuth(true)
-				setNotification('Successfully login')
+				setNotification('successfullyLogin')
 			})
 			.catch(e => {
-				console.log('e: ', e)
+				console.log(e)
 				setNotification('Wrong email or password')
 			})
 			.finally(() => {
@@ -63,12 +65,31 @@ export const AuthProvider: FC<PropsWithChildren> = ({ children }) => {
 	}
 
 	const logout = async () => {
-		console.log('work')
-		await api.get('/auth/logout').then(() => {
+		await api.post('/auth/logout', {}).then(() => {
 			setUser(null)
 			setIsAuth(false)
+			localStorage.removeItem('token')
 		})
 	}
+
+	useEffect(() => {
+		const fetchUser = async () => {
+			const tokenFromLocalStorage = localStorage.getItem('token')
+
+			if (tokenFromLocalStorage) {
+				await api
+					.get('/users/me')
+					.then(res => {
+						setUser({ user: res.data, token: tokenFromLocalStorage })
+						setIsAuth(true)
+						setNotification('successfullyLogin')
+					})
+					.catch(e => console.error(e))
+			}
+		}
+
+		fetchUser()
+	}, [])
 
 	return (
 		<AuthContext.Provider

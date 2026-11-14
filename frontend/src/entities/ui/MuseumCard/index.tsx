@@ -19,16 +19,23 @@ export const MuseumCard: FC<IProps> = ({ museum }) => {
 					<p className='text-lg'>{museum.description}</p>
 				</div>
 				<div className='flex flex-col gap-2'>
-					<Link to={`/museum/id=${museum.id}`}>more</Link>
-					<address>{museum.city + ' ' + museum.address}</address>
+					<Link
+						className='flex items-center gap-3 bg-white p-3 rounded-full text-black justify-center font-semibold hover:bg-gray-200 transition-all cursor-pointer'
+						to={`/museum/id=${museum.id}`}
+					>
+						{t('learnMore')}
+					</Link>
 					<a
-						className='bg-white p-3 rounded-full text-black flex items-center justify-center gap-3 font-semibold hover:bg-gray-200 transition-all'
+						className='flex items-center gap-3 bg-white p-3 rounded-full text-black justify-center font-semibold hover:bg-gray-200 transition-all cursor-pointer'
 						target='_blank'
 						href={museum.two_gis_url}
 					>
 						{t('openIn')}
 						<img src='/images/2gis.webp' alt='2gis icon' width={65} />
 					</a>
+					<address>
+						{museum.city}, {museum.address}
+					</address>
 				</div>
 			</div>
 		</div>

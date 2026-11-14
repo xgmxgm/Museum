@@ -10,5 +10,12 @@
 	"allRightsReserved": "Барлық құқықтар қорғалған",
 	"openIn": "Ашу",
 	"userName": "Пайдаланушы аты",
-	"exit": "Шығу"
+	"exit": "Шығу",
+	"comment": "Пікір",
+	"learnMore": "Көбірек білу",
+	"send": "Жіберу",
+	"noComment": "Пікір жоқ",
+	"successfullyRegister": "Сәтті тіркелу",
+	"successfullyLogin": "Жүйеге сәтті кірдіңіз",
+	"navigation": "Навигация"
 }
