@@ -1,8 +1,8 @@
+import { Link } from 'react-router'
 import { useState, type FC } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Input } from '../../../../shared/ui/Input'
-import { Button } from 'antd'
-import { Link } from 'react-router'
+import { Button } from '../../../../shared/ui/Button'
 import { useAuthContext } from '../../../../features/Auth/context'
 
 interface IProps {
@@ -49,17 +49,24 @@ export const SignUp: FC<IProps> = ({ setIsSignIn }) => {
 			<Input
 				value={password}
 				onChange={e => setPassword(e.target.value)}
-				type='text'
+				type='password'
+				showPasswordToggle
 				placeholder={t('password') + '...'}
 			/>
 			<Input
 				value={repeatPassword}
 				onChange={e => setRepeatPassword(e.target.value)}
-				type='text'
+				type='password'
+				showPasswordToggle
 				placeholder={t('repeatPassword') + '...'}
 			/>
-			<Button disabled={isLoading} className='mt-8' onClick={handleSingUp}>
-				{t('signIn')}
+			<Button
+				stylesBtn='secondary'
+				disabled={isLoading}
+				className='mt-8'
+				onClick={handleSingUp}
+			>
+				{t('signUp')}
 			</Button>
 			<div className='flex justify-between'>
 				<Link to='/'>{t('backToHome')}</Link>

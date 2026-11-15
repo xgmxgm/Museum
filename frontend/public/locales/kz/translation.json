@@ -12,10 +12,19 @@
 	"userName": "Пайдаланушы аты",
 	"exit": "Шығу",
 	"comment": "Пікір",
+	"comments": "Пікірлер",
 	"learnMore": "Көбірек білу",
 	"send": "Жіберу",
 	"noComment": "Пікір жоқ",
 	"successfullyRegister": "Сәтті тіркелу",
 	"successfullyLogin": "Жүйеге сәтті кірдіңіз",
-	"navigation": "Навигация"
+	"navigation": "Навигация",
+	"successfullyLogout": "Жүйеден сәтті шықтыңыз",
+	"year": "Жыл",
+	"addMyReview": "Пікірімді қосу",
+	"enterReview": "Пікірді жазыңыз",
+	"rateMuseum": "Мұражайды бағалау",
+	"raiting": "Рейтингі",
+	"noRaiting": "Бағаланбаған",
+	"address": "Mекенжай"
 }

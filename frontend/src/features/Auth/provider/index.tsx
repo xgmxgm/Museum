@@ -69,6 +69,7 @@ export const AuthProvider: FC<PropsWithChildren> = ({ children }) => {
 			setUser(null)
 			setIsAuth(false)
 			localStorage.removeItem('token')
+			setNotification('successfullyLogout')
 		})
 	}
 

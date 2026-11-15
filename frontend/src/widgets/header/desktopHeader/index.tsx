@@ -16,8 +16,8 @@ export const DesktopHeader: FC = () => {
 	}
 
 	return (
-		<div className='w-full flex items-center justify-center fixed top-3 z-10'>
-			<div className='p-7 rounded-lg w-11/12 flex items-center justify-between glass-effect'>
+		<div className='w-full flex items-center justify-center fixed z-10'>
+			<div className='p-7 rounded-b-lg w-11/12 flex items-center justify-between glass-effect'>
 				<Link to='/'>
 					<Logo />
 				</Link>

@@ -11,7 +11,7 @@
 	}
 
 	.bg-welcome-img {
-		@apply bg-[url('./images/mainBackground.png')];
+		background-image: url('./images/mainBackground.png');
 	}
 }
 

@@ -12,10 +12,19 @@
 	"userName": "Имя пользователя",
 	"exit": "Выход",
 	"comment": "Комментарий",
+	"comments": "Комментарии",
 	"learnMore": "Узнать больше",
 	"send": "Отправить",
 	"noComment": "Без комментариев",
 	"successfullyRegister": "Успешно зарегистрироваться",
 	"successfullyLogin": "Вход выполнен успешно",
-	"navigation": "Навигация"
+	"navigation": "Навигация",
+	"successfullyLogout": "Выход выполнен успешно",
+	"year": "Год",
+	"addMyReview": "Добавить мой отзыв",
+	"enterReview": "Введите отзыв",
+	"rateMuseum": "Oценить музей",
+	"raiting": "Рейтинг",
+	"noRaiting": "Без рейтинга",
+	"address": "Aдрес"
 }

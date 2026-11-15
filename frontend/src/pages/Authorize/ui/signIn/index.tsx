@@ -1,9 +1,9 @@
-import { Button } from 'antd'
 import { useState, type FC } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router'
 import { Input } from '../../../../shared/ui/Input'
 import { useAuthContext } from '../../../../features/Auth/context'
+import { Button } from '../../../../shared/ui/Button'
 
 interface IProps {
 	setIsSignIn: (isSignIn: boolean) => void
@@ -33,10 +33,16 @@ export const SignIn: FC<IProps> = ({ setIsSignIn }) => {
 			<Input
 				value={password}
 				onChange={e => setPassword(e.target.value)}
-				type='text'
+				type='password'
+				showPasswordToggle
 				placeholder={t('password') + '...'}
 			/>
-			<Button disabled={isLoading} className='mt-8' onClick={handleSingIn}>
+			<Button
+				stylesBtn='secondary'
+				disabled={isLoading}
+				className='mt-8'
+				onClick={handleSingIn}
+			>
 				{t('signIn')}
 			</Button>
 			<div className='flex justify-between'>
