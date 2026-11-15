@@ -29,11 +29,13 @@ pub async fn get_museums(
         SELECT 
             m.id, m.name, m.name_kz, m.description, m.description_kz,
             m.city, m.address, m.founded_year,
-            m.image_url, m.two_gis_url,
+            m.image_url, m.image_urls, m.two_gis_url, -- <-- ДОБАВИЛИ m.image_urls
             AVG(r.rating)::float8 as average_rating
         FROM museums m
         LEFT JOIN reviews r ON m.id = r.museum_id
-        GROUP BY m.id
+        GROUP BY 
+            m.id, m.name, m.name_kz, m.description, m.description_kz, 
+            m.city, m.address, m.founded_year, m.image_url, m.image_urls, m.two_gis_url
         LIMIT $1 OFFSET $2
         "#
     )
@@ -46,7 +48,6 @@ pub async fn get_museums(
     let response: Vec<serde_json::Value> = museums
         .into_iter()
         .map(|m| {
-            
             let (kz_name, kz_desc, ru_city, kz_city, ru_addr, kz_addr) = match m.name.as_str() {
                 "Музей Абая" => (
                     "Абай мұражайы",
@@ -97,6 +98,7 @@ pub async fn get_museums(
                 "founded_year": m.founded_year,
                 "average_rating": m.average_rating,
                 "image_url": m.image_url,
+                "image_urls": m.image_urls, // <-- ДОБАВИЛИ СЮДА
                 "two_gis_url": m.two_gis_url,
             })
         })
@@ -117,12 +119,14 @@ pub async fn get_museum_by_id(
         SELECT 
             m.id, m.name, m.name_kz, m.description, m.description_kz,
             m.city, m.address, m.founded_year,
-            m.image_url, m.two_gis_url,
+            m.image_url, m.image_urls, m.two_gis_url, -- <-- ДОБАВИЛИ m.image_urls
             AVG(r.rating)::float8 as average_rating
         FROM museums m
         LEFT JOIN reviews r ON m.id = r.museum_id
         WHERE m.id = $1
-        GROUP BY m.id
+        GROUP BY 
+            m.id, m.name, m.name_kz, m.description, m.description_kz, 
+            m.city, m.address, m.founded_year, m.image_url, m.image_urls, m.two_gis_url
         "#
     )
     .bind(id)
@@ -131,7 +135,6 @@ pub async fn get_museum_by_id(
     .map_err(|e| AppError::Internal(e.to_string()))?
     .ok_or(AppError::NotFound("Музей не найден".into()))?;
 
-    
     let (kz_name, kz_desc, ru_city, kz_city, ru_addr, kz_addr) = match museum.name.as_str() {
         "Музей Абая" => (
             "Абай мұражайы",
@@ -182,6 +185,7 @@ pub async fn get_museum_by_id(
         "founded_year": museum.founded_year,
         "average_rating": museum.average_rating,
         "image_url": museum.image_url,
+        "image_urls": museum.image_urls, // <-- ДОБАВИЛИ СЮДА
         "two_gis_url": museum.two_gis_url,
     })))
 }
