@@ -28,14 +28,14 @@ pub async fn get_museums(
         r#"
         SELECT 
             m.id, m.name, m.name_kz, m.description, m.description_kz,
-            m.city, m.address, m.founded_year,
-            m.image_url, m.image_urls, m.two_gis_url, -- <-- ДОБАВИЛИ m.image_urls
+            m.city, m.city_kz, m.address, m.address_kz, m.founded_year,
+            m.image_url, m.image_urls, m.two_gis_url,
             AVG(r.rating)::float8 as average_rating
         FROM museums m
         LEFT JOIN reviews r ON m.id = r.museum_id
         GROUP BY 
             m.id, m.name, m.name_kz, m.description, m.description_kz, 
-            m.city, m.address, m.founded_year, m.image_url, m.image_urls, m.two_gis_url
+            m.city, m.city_kz, m.address, m.address_kz, m.founded_year, m.image_url, m.image_urls, m.two_gis_url
         LIMIT $1 OFFSET $2
         "#
     )
@@ -48,57 +48,33 @@ pub async fn get_museums(
     let response: Vec<serde_json::Value> = museums
         .into_iter()
         .map(|m| {
-            let (kz_name, kz_desc, ru_city, kz_city, ru_addr, kz_addr) = match m.name.as_str() {
-                "Музей Абая" => (
-                    "Абай мұражайы",
-                    "Абай Құнанбаевтың әдеби-мемориалдық мұражайы.",
-                    "Семей", "Семей", "ул. Абая, 10", "Абай көшесі, 10"
-                ),
-                "Музей Мухтара Ауэзова" => (
-                    "Мұхтар Әуезов мұражайы",
-                    "Мұхтар Әуезовтің әдеби-мемориалдық мұражайы.",
-                    "Алматы", "Алматы", "ул. Тулебаева, 185", "Төлебаев көшесі, 185"
-                ),
-                "Музей Ахмета Байтурсынова" => (
-                    "Ахмет Байтұрсынов мұражайы",
-                    "Ахмет Байтұрсыновтың мұражайы.",
-                    "Алматы", "Алматы", "ул. Байтурсынова, 60", "Байтұрсынов көшесі, 60"
-                ),
-                "Музей Габита Мусрепова" => (
-                    "Ғабит Мүсірепов мұражайы",
-                    "Ғабит Мүсіреповтің әдеби-мемориалдық мұражайы.",
-                    "Алматы", "Алматы", "ул. Карасай батыра, 49/130", "Қарасай батыр көшесі, 49/130"
-                ),
-                "Музей Сакена Сейфуллина" => (
-                    "Сәкен Сейфуллин мұражайы",
-                    "Сәкен Сейфуллиннің мұражайы.",
-                    "Астана", "Астана", "ул. Сейфуллина, 30", "Сейфуллин көшесі, 30"
-                ),
-                _ => (
-                    m.name.as_str(), 
-                    m.description.as_str(), 
-                    m.city.as_str(), 
-                    m.city.as_str(), 
-                    m.address.as_str(), 
-                    m.address.as_str()
-                ),
+            let name = if lang == "kz" { m.name_kz.unwrap_or(m.name.clone()) } else { m.name.clone() };
+            let description = if lang == "kz" { m.description_kz.unwrap_or(m.description.clone()) } else { m.description.clone() };
+            
+            // ЖЕСТКО ПРОПИСЫВАЕМ ГОРОДА И АДРЕСА ДЛЯ KZ (чтобы обойти глюк с кодировкой в БД)
+            let (city, address) = if lang == "kz" {
+                match m.name.as_str() {
+                    "Музей Абая" => ("Семей".to_string(), "Абай көшесі, 10".to_string()),
+                    "Музей Мухтара Ауэзова" => ("Алматы".to_string(), "Төлебаев көшесі, 185".to_string()),
+                    "Музей Ахмета Байтурсынова" => ("Алматы".to_string(), "Байтұрсынов көшесі, 60".to_string()),
+                    "Музей Габита Мусрепова" => ("Алматы".to_string(), "Қарасай батыр көшесі, 49/130".to_string()),
+                    "Музей Сакена Сейфуллина" => ("Астана".to_string(), "Сейфуллин көшесі, 30".to_string()),
+                    _ => (m.city.clone(), m.address.clone()),
+                }
+            } else {
+                (m.city.clone(), m.address.clone())
             };
-
-            let name = if lang == "kz" { kz_name } else { m.name.as_str() };
-            let description = if lang == "kz" { kz_desc } else { m.description.as_str() };
-            let city = if lang == "kz" { kz_city } else { ru_city };
-            let address = if lang == "kz" { kz_addr } else { ru_addr };
 
             serde_json::json!({
                 "id": m.id,
                 "name": name,
                 "description": description,
-                "city": city,           
-                "address": address,     
+                "city": city,
+                "address": address,
                 "founded_year": m.founded_year,
                 "average_rating": m.average_rating,
                 "image_url": m.image_url,
-                "image_urls": m.image_urls, // <-- ДОБАВИЛИ СЮДА
+                "image_urls": m.image_urls,
                 "two_gis_url": m.two_gis_url,
             })
         })
@@ -118,15 +94,15 @@ pub async fn get_museum_by_id(
         r#"
         SELECT 
             m.id, m.name, m.name_kz, m.description, m.description_kz,
-            m.city, m.address, m.founded_year,
-            m.image_url, m.image_urls, m.two_gis_url, -- <-- ДОБАВИЛИ m.image_urls
+            m.city, m.city_kz, m.address, m.address_kz, m.founded_year,
+            m.image_url, m.image_urls, m.two_gis_url,
             AVG(r.rating)::float8 as average_rating
         FROM museums m
         LEFT JOIN reviews r ON m.id = r.museum_id
         WHERE m.id = $1
         GROUP BY 
             m.id, m.name, m.name_kz, m.description, m.description_kz, 
-            m.city, m.address, m.founded_year, m.image_url, m.image_urls, m.two_gis_url
+            m.city, m.city_kz, m.address, m.address_kz, m.founded_year, m.image_url, m.image_urls, m.two_gis_url
         "#
     )
     .bind(id)
@@ -135,46 +111,22 @@ pub async fn get_museum_by_id(
     .map_err(|e| AppError::Internal(e.to_string()))?
     .ok_or(AppError::NotFound("Музей не найден".into()))?;
 
-    let (kz_name, kz_desc, ru_city, kz_city, ru_addr, kz_addr) = match museum.name.as_str() {
-        "Музей Абая" => (
-            "Абай мұражайы",
-            "Абай Құнанбаевтың әдеби-мемориалдық мұражайы.",
-            "Семей", "Семей", "ул. Абая, 10", "Абай көшесі, 10"
-        ),
-        "Музей Мухтара Ауэзова" => (
-            "Мұхтар Әуезов мұражайы",
-            "Мұхтар Әуезовтің әдеби-мемориалдық мұражайы.",
-            "Алматы", "Алматы", "ул. Тулебаева, 185", "Төлебаев көшесі, 185"
-        ),
-        "Музей Ахмета Байтурсынова" => (
-            "Ахмет Байтұрсынов мұражайы",
-            "Ахмет Байтұрсыновтың мұражайы.",
-            "Алматы", "Алматы", "ул. Байтурсынова, 60", "Байтұрсынов көшесі, 60"
-        ),
-        "Музей Габита Мусрепова" => (
-            "Ғабит Мүсірепов мұражайы",
-            "Ғабит Мүсіреповтің әдеби-мемориалдық мұражайы.",
-            "Алматы", "Алматы", "ул. Карасай батыра, 49/130", "Қарасай батыр көшесі, 49/130"
-        ),
-        "Музей Сакена Сейфуллина" => (
-            "Сәкен Сейфуллин мұражайы",
-            "Сәкен Сейфуллиннің мұражайы.",
-            "Астана", "Астана", "ул. Сейфуллина, 30", "Сейфуллин көшесі, 30"
-        ),
-        _ => (
-            museum.name.as_str(), 
-            museum.description.as_str(), 
-            museum.city.as_str(), 
-            museum.city.as_str(), 
-            museum.address.as_str(), 
-            museum.address.as_str()
-        ),
+    let name = if lang == "kz" { museum.name_kz.unwrap_or(museum.name.clone()) } else { museum.name.clone() };
+    let description = if lang == "kz" { museum.description_kz.unwrap_or(museum.description.clone()) } else { museum.description.clone() };
+    
+    // ЖЕСТКО ПРОПИСЫВАЕМ ДЛЯ KZ
+    let (city, address) = if lang == "kz" {
+        match museum.name.as_str() {
+            "Музей Абая" => ("Семей".to_string(), "Абай көшесі, 10".to_string()),
+            "Музей Мухтара Ауэзова" => ("Алматы".to_string(), "Төлебаев көшесі, 185".to_string()),
+            "Музей Ахмета Байтурсынова" => ("Алматы".to_string(), "Байтұрсынов көшесі, 60".to_string()),
+            "Музей Габита Мусрепова" => ("Алматы".to_string(), "Қарасай батыр көшесі, 49/130".to_string()),
+            "Музей Сакена Сейфуллина" => ("Астана".to_string(), "Сейфуллин көшесі, 30".to_string()),
+            _ => (museum.city.clone(), museum.address.clone()),
+        }
+    } else {
+        (museum.city.clone(), museum.address.clone())
     };
-
-    let name = if lang == "kz" { kz_name } else { museum.name.as_str() };
-    let description = if lang == "kz" { kz_desc } else { museum.description.as_str() };
-    let city = if lang == "kz" { kz_city } else { ru_city };
-    let address = if lang == "kz" { kz_addr } else { ru_addr };
 
     Ok(Json(serde_json::json!({
         "id": museum.id,
@@ -185,7 +137,7 @@ pub async fn get_museum_by_id(
         "founded_year": museum.founded_year,
         "average_rating": museum.average_rating,
         "image_url": museum.image_url,
-        "image_urls": museum.image_urls, // <-- ДОБАВИЛИ СЮДА
+        "image_urls": museum.image_urls,
         "two_gis_url": museum.two_gis_url,
     })))
 }
