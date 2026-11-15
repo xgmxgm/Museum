@@ -33,7 +33,7 @@ export const Museums: FC = () => {
 				<div>
 					<Swiper
 						modules={[Navigation, Pagination, Autoplay]}
-						slidesPerView={4}
+						slidesPerView={3}
 						autoplay={{
 							delay: 3000,
 							disableOnInteraction: false,

@@ -1,0 +1,21 @@
+.custom-select {
+	border: none;
+	outline: none;
+	cursor: pointer;
+}
+
+.custom-option {
+	background-color: #1e293b;
+	color: #f1f5f9;
+	font-size: 14px;
+	padding: 10px;
+}
+
+.custom-option:checked {
+	background-color: #334155;
+	color: white;
+}
+
+.custom-option:hover {
+	background-color: #475569;
+}

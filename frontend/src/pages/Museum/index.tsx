@@ -13,7 +13,7 @@ import { useAuthContext } from '../../features/Auth/context'
 import { useCallback, useEffect, useState, type FC } from 'react'
 
 export const MuseumPage: FC = () => {
-	const [rating, setRating] = useState<number>(0)
+	const [rating, setRating] = useState<number>(1)
 	const [review, setReview] = useState<string>('')
 	const [isShowModal, setIsShowModal] = useState<boolean>(false)
 	const [museum, setMuseum] = useState<IMuseum | null>(null)
@@ -52,6 +52,17 @@ export const MuseumPage: FC = () => {
 		}
 	}
 
+	const fetchReview = async () => {
+		try {
+			await api.get(`/museums/${id?.slice(3)}/reviews`).then(res => {
+				console.log(res)
+				setRating(res.data[0].rating)
+			})
+		} catch (error) {
+			console.error(error)
+		}
+	}
+
 	const sendReview = async () => {
 		try {
 			await api.post(`/museums/${id?.slice(3)}/reviews`, {
@@ -63,14 +74,25 @@ export const MuseumPage: FC = () => {
 		}
 	}
 
+	const deleteComment = async (id: string) => {
+		try {
+			await api.delete(`/comments/${id}`)
+
+			await fetchMuseumComments()
+		} catch (e) {
+			console.error(e)
+		}
+	}
+
 	useEffect(() => {
 		fetchMuseumComments()
 	}, [fetchMuseumComments])
 
 	useEffect(() => {
 		fetchMuseum()
+		fetchReview()
 	}, [i18n, id])
-
+	
 	return (
 		<div className='flex justify-center h-screen pt-28'>
 			<div className='w-10/12 flex justify-between items-start gap-5'>
@@ -82,7 +104,11 @@ export const MuseumPage: FC = () => {
 						<h2 className='text-xl font-semibold'>{museum?.name}</h2>
 						<div className='flex justify-between'>
 							<div>
-								<img src={`${import.meta.env.VITE_API}${museum?.image_url}`} alt='museum img' />
+								<img
+									src={`${import.meta.env.VITE_API}${museum?.image_url}`}
+									alt='museum img'
+									className='rounded'
+								/>
 							</div>
 							<div className='flex flex-col gap-3'>
 								<p>
@@ -94,6 +120,14 @@ export const MuseumPage: FC = () => {
 								<p>
 									{t('address')}: {museum?.city}, {museum?.address}
 								</p>
+								<a
+									className='flex items-center gap-3 bg-white p-2 rounded-full text-black justify-center font-semibold hover:bg-gray-200 transition-all cursor-pointer'
+									target='_blank'
+									href={museum?.two_gis_url}
+								>
+									{t('openIn')}
+									<img src='/images/2gis.webp' alt='2gis icon' width={65} />
+								</a>
 								{isAuth && (
 									<Button
 										stylesBtn='secondary'
@@ -106,7 +140,11 @@ export const MuseumPage: FC = () => {
 						</div>
 						<p>{museum?.description}</p>
 					</div>
-					<Comments comments={museumComments} sendComment={sendComment} />
+					<Comments
+						comments={museumComments}
+						sendComment={sendComment}
+						deleteComment={deleteComment}
+					/>
 				</div>
 			</div>
 			<Modal
