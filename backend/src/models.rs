@@ -15,6 +15,7 @@ pub struct Museum {
     pub founded_year: Option<i32>,
     pub average_rating: Option<f64>,
     pub image_url: Option<String>,
+    pub image_urls: Option<Vec<String>>,
     pub two_gis_url: Option<String>,
 }
 
@@ -93,4 +94,14 @@ pub struct UserResponse {
     pub id: Uuid,
     pub username: String,
     pub email: String,
+}
+
+#[derive(Debug, Serialize, Deserialize, FromRow)]
+pub struct CommentWithUser {
+    pub id: Uuid,
+    pub museum_id: Uuid,
+    pub user_id: Uuid,
+    pub content: String,
+    pub created_at: chrono::DateTime<chrono::Utc>,
+    pub username: String,
 }

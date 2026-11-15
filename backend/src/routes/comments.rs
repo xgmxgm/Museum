@@ -1,5 +1,9 @@
-use axum::{routing::{get, post}, Router, middleware};
-use crate::handlers::comments::{get_comments, create_comment};
+use axum::{
+    routing::{get, post, delete}, 
+    Router, 
+    middleware
+};
+use crate::handlers::comments::{get_comments, create_comment, delete_comment}; 
 use crate::handlers::auth::auth_middleware;
 use crate::AppState;
 
@@ -9,6 +13,7 @@ pub fn comment_routes(state: AppState) -> Router<AppState> {
 
     let protected = Router::new()
         .route("/api/museums/{id}/comments", post(create_comment))
+        .route("/api/comments/{id}", delete(delete_comment)) 
         .layer(middleware::from_fn_with_state(state, auth_middleware));
 
     public.merge(protected)
