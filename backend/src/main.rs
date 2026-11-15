@@ -1,7 +1,4 @@
-use axum::{
-    http::{HeaderValue, Method},
-};
-use tower_http::cors::CorsLayer;
+use tower_http::cors::{CorsLayer, Any};
 use tower_http::trace::TraceLayer; 
 use tower_http::services::ServeDir; 
 
@@ -39,19 +36,14 @@ async fn main() {
         jwt_secret: config.jwt_secret.clone(), 
     };
     
+    // Настройка CORS: разрешаем запросы с любых адресов (для разработки)
     let cors = CorsLayer::new()
-        .allow_origin(config.frontend_url.parse::<HeaderValue>().unwrap()) 
-        .allow_methods([
-            Method::GET, Method::POST, Method::PUT, Method::DELETE, Method::OPTIONS,
-        ])
-        .allow_headers([
-            axum::http::header::CONTENT_TYPE,
-            axum::http::header::AUTHORIZATION,
-        ]);
+        .allow_origin(Any)
+        .allow_methods(Any)
+        .allow_headers(Any);
 
-    
     let app = routes::create_router(state)
-        .nest_service("/static", ServeDir::new("static")) // <-- Раздача статики
+        .nest_service("/static", ServeDir::new("static")) // Раздача статики
         .layer(TraceLayer::new_for_http()) 
         .layer(cors);
 
