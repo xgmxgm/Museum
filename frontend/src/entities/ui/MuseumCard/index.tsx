@@ -13,7 +13,7 @@ export const MuseumCard: FC<IProps> = ({ museum }) => {
 	return (
 		<div className='border rounded-lg p-5 w-96'>
 			<div className='h-full flex flex-col justify-between gap-5'>
-				<img src={museum.image_url} alt='museum img' />
+				<img src={`${import.meta.env.VITE_API}${museum.image_url}`} alt='museum img' />
 				<div className='flex flex-col gap-3'>
 					<p className='text-2xl'>{museum.name}</p>
 					<p className='text-lg'>{museum.description}</p>

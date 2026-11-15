@@ -82,7 +82,7 @@ export const MuseumPage: FC = () => {
 						<h2 className='text-xl font-semibold'>{museum?.name}</h2>
 						<div className='flex justify-between'>
 							<div>
-								<img src={museum?.image_url} alt='museum img' />
+								<img src={`${import.meta.env.VITE_API}${museum?.image_url}`} alt='museum img' />
 							</div>
 							<div className='flex flex-col gap-3'>
 								<p>

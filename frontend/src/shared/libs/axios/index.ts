@@ -1,7 +1,7 @@
 import axios from 'axios'
 
 export const api = axios.create({
-	baseURL: import.meta.env.VITE_API || '',
+	baseURL: `${import.meta.env.VITE_API}/api/` || '',
 })
 
 api.interceptors.request.use(
