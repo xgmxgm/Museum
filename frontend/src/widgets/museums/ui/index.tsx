@@ -41,7 +41,7 @@ export const Museums: FC = () => {
 				<div>
 					<Swiper
 						modules={[Autoplay]}
-						slidesPerView={width >= 1535 ? 3 : 'auto'}
+						slidesPerView={width >= 1435 ? 3 : 'auto'}
 						spaceBetween={20}
 						autoplay={{
 							delay: 3000,
