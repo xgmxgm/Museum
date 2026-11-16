@@ -11,7 +11,7 @@ export const MuseumCard: FC<IProps> = ({ museum }) => {
 	const { t } = useTranslation()
 
 	return (
-		<div className='border rounded-lg p-5 w-96'>
+		<div className='border rounded-lg p-5 w-80'>
 			<div className='h-full flex flex-col justify-between gap-5'>
 				<img
 					src={`${import.meta.env.VITE_API}${museum.image_url}`}
@@ -43,6 +43,33 @@ export const MuseumCard: FC<IProps> = ({ museum }) => {
 					<address>
 						{museum.city}, {museum.address}
 					</address>
+				</div>
+			</div>
+		</div>
+	)
+}
+
+export const MuseumCardSkeleton: FC = () => {
+	return (
+		<div className='border rounded-lg p-5 w-96 animate-pulse'>
+			<div className='h-full flex flex-col justify-between gap-5'>
+				<div className='h-80 w-full bg-gray-700 rounded' />
+
+				<div className='flex flex-col gap-3'>
+					<div className='h-7 w-3/4 bg-gray-700 rounded' />
+
+					<div className='flex flex-col gap-2'>
+						<div className='h-4 w-full bg-gray-700 rounded' />
+						<div className='h-4 w-full bg-gray-700 rounded' />
+						<div className='h-4 w-2/3 bg-gray-700 rounded' />
+					</div>
+				</div>
+
+				<div className='flex flex-col gap-2'>
+					<div className='h-12 w-full bg-gray-700 rounded-full' />
+					<div className='h-12 w-full bg-gray-700 rounded-full' />
+
+					<div className='h-4 w-2/3 bg-gray-700 rounded mt-2' />
 				</div>
 			</div>
 		</div>

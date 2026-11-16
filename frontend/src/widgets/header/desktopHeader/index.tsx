@@ -1,5 +1,6 @@
 import { type FC } from 'react'
 import { Link } from 'react-router'
+import { motion } from 'framer-motion'
 import { useTranslation } from 'react-i18next'
 import { Logo } from '../../../shared/ui/Logo'
 import { IoExitOutline } from 'react-icons/io5'
@@ -16,7 +17,15 @@ export const DesktopHeader: FC = () => {
 	}
 
 	return (
-		<div className='w-full flex items-center justify-center fixed z-10'>
+		<motion.div
+			initial={{ y: -100, opacity: 0 }}
+			animate={{ y: 0, opacity: 1 }}
+			transition={{
+				duration: 0.6,
+				ease: [0.22, 1, 0.36, 1],
+			}}
+			className='w-full flex items-center justify-center fixed z-10'
+		>
 			<div className='p-7 rounded-b-lg w-11/12 flex items-center justify-between glass-effect'>
 				<Link to='/'>
 					<Logo />
@@ -46,6 +55,6 @@ export const DesktopHeader: FC = () => {
 					/>
 				</div>
 			</div>
-		</div>
+		</motion.div>
 	)
 }

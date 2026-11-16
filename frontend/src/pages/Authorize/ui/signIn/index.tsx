@@ -29,6 +29,7 @@ export const SignIn: FC<IProps> = ({ setIsSignIn }) => {
 				onChange={e => setEmail(e.target.value)}
 				type='text'
 				placeholder={t('email') + '...'}
+				required
 			/>
 			<Input
 				value={password}
@@ -36,6 +37,7 @@ export const SignIn: FC<IProps> = ({ setIsSignIn }) => {
 				type='password'
 				showPasswordToggle
 				placeholder={t('password') + '...'}
+				required
 			/>
 			<Button
 				stylesBtn='secondary'
