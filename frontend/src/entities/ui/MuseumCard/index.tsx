@@ -16,7 +16,7 @@ export const MuseumCard: FC<IProps> = ({ museum }) => {
 				<img
 					src={`${import.meta.env.VITE_API}${museum.image_url}`}
 					alt='museum img'
-					className='rounded'
+					className='rounded h-80 object-cover'
 				/>
 				<div className='flex flex-col gap-3'>
 					<p className='text-2xl'>{museum.name}</p>

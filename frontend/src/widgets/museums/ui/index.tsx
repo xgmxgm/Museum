@@ -6,7 +6,7 @@ import { MuseumCard } from '../../../entities/ui/MuseumCard'
 
 import 'swiper/css'
 import { Swiper, SwiperSlide } from 'swiper/react'
-import { Autoplay, Navigation, Pagination } from 'swiper/modules'
+import { Autoplay } from 'swiper/modules'
 
 export const Museums: FC = () => {
 	const [museums, setMuseums] = useState<IMuseum[]>([])
@@ -32,7 +32,7 @@ export const Museums: FC = () => {
 				<p className='text-5xl font-serif font-bold'>{t('museums')}</p>
 				<div>
 					<Swiper
-						modules={[Navigation, Pagination, Autoplay]}
+						modules={[Autoplay]}
 						slidesPerView={3}
 						autoplay={{
 							delay: 3000,

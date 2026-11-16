@@ -11,6 +11,8 @@ import { Input } from '../../shared/ui/Input'
 import { FiStar } from 'react-icons/fi'
 import { useAuthContext } from '../../features/Auth/context'
 import { useCallback, useEffect, useState, type FC } from 'react'
+import { Swiper, SwiperSlide } from 'swiper/react'
+import { Autoplay } from 'swiper/modules'
 
 export const MuseumPage: FC = () => {
 	const [rating, setRating] = useState<number>(1)
@@ -92,7 +94,7 @@ export const MuseumPage: FC = () => {
 		fetchMuseum()
 		fetchReview()
 	}, [i18n, id])
-	
+
 	return (
 		<div className='flex justify-center h-screen pt-28'>
 			<div className='w-10/12 flex justify-between items-start gap-5'>
@@ -102,13 +104,29 @@ export const MuseumPage: FC = () => {
 				<div className='flex flex-col gap-5 flex-1 glass-effect p-7 rounded-2xl'>
 					<div className='flex flex-col gap-3'>
 						<h2 className='text-xl font-semibold'>{museum?.name}</h2>
-						<div className='flex justify-between'>
-							<div>
-								<img
-									src={`${import.meta.env.VITE_API}${museum?.image_url}`}
-									alt='museum img'
-									className='rounded'
-								/>
+						<div className='flex justify-between gap-5'>
+							<div className='w-96'>
+								<Swiper
+									modules={[Autoplay]}
+									slidesPerView={'auto'}
+									autoplay={{
+										delay: 3000,
+										disableOnInteraction: false,
+									}}
+									loop
+								>
+									{museum?.image_urls.map(img_url => (
+										<SwiperSlide>
+											<div className='p-3'>
+												<img
+													src={`${import.meta.env.VITE_API}${img_url}`}
+													alt='museum img'
+													className='rounded'
+												/>
+											</div>
+										</SwiperSlide>
+									))}
+								</Swiper>
 							</div>
 							<div className='flex flex-col gap-3'>
 								<p>

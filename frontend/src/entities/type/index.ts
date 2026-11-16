@@ -7,5 +7,6 @@ export interface IMuseum {
 	founded_year: number
 	average_rating: any
 	image_url: string
+	image_urls: string[]
 	two_gis_url: string
 }
