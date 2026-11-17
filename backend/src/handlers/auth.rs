@@ -14,8 +14,25 @@ use uuid::Uuid;
 
 use crate::AppState;
 use crate::models::{
-    User, UserResponse, RegisterRequest, LoginRequest, AuthResponse, Claims, ChangePasswordRequest
+    User, UserResponse, RegisterRequest, LoginRequest, AuthResponse, Claims, 
+    ChangePasswordRequest, TokenResponse, RefreshRequest
 };
+
+fn generate_tokens(user: &User, secret: &[u8]) -> Result<(String, String), StatusCode> {
+    let exp = Utc::now().checked_add_signed(Duration::minutes(15)).unwrap().timestamp() as usize;
+    let claims = Claims {
+        sub: user.id.to_string(),
+        exp,
+        jti: Uuid::new_v4(),
+        role: user.role.clone(),
+    };
+    let access_token = encode(&Header::default(), &claims, &EncodingKey::from_secret(secret))
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+
+    let refresh_token = Uuid::new_v4().to_string();
+
+    Ok((access_token, refresh_token))
+}
 
 pub async fn register(
     State(state): State<AppState>,
@@ -31,7 +48,6 @@ pub async fn register(
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?
         .to_string();
 
-    
     let user = sqlx::query_as::<_, User>(
         "INSERT INTO users (username, email, password_hash, role) VALUES ($1, $2, $3, 'user') RETURNING *"
     )
@@ -45,27 +61,20 @@ pub async fn register(
         StatusCode::INTERNAL_SERVER_ERROR
     })?;
 
-    let expiration = Utc::now()
-        .checked_add_signed(Duration::hours(24))
-        .expect("valid timestamp")
-        .timestamp() as usize;
+    let (access_token, refresh_token) = generate_tokens(&user, state.jwt_secret.as_bytes())?;
 
-    let claims = Claims {
-        sub: user.id.to_string(),
-        exp: expiration,
-        jti: Uuid::new_v4(),
-        role: user.role.clone(),
-    };
-
-    let token = encode(
-        &Header::default(),
-        &claims,
-        &EncodingKey::from_secret(state.jwt_secret.as_bytes()),
-    )
-    .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    let expires_at = Utc::now() + Duration::days(7);
+    sqlx::query("INSERT INTO refresh_tokens (user_id, token, expires_at) VALUES ($1, $2, $3)")
+        .bind(user.id)
+        .bind(&refresh_token)
+        .bind(expires_at)
+        .execute(&state.db)
+        .await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
     Ok(Json(AuthResponse {
-        token,
+        access_token,
+        refresh_token,
         user: UserResponse {
             id: user.id,
             username: user.username,
@@ -96,27 +105,20 @@ pub async fn login(
         return Err(StatusCode::UNAUTHORIZED);
     }
 
-    let expiration = Utc::now()
-        .checked_add_signed(Duration::hours(24))
-        .expect("valid timestamp")
-        .timestamp() as usize;
+    let (access_token, refresh_token) = generate_tokens(&user, state.jwt_secret.as_bytes())?;
 
-    let claims = Claims {
-        sub: user.id.to_string(),
-        exp: expiration,
-        jti: Uuid::new_v4(),
-        role: user.role.clone(), 
-    };
-
-    let token = encode(
-        &Header::default(),
-        &claims,
-        &EncodingKey::from_secret(state.jwt_secret.as_bytes()),
-    )
-    .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    let expires_at = Utc::now() + Duration::days(7);
+    sqlx::query("INSERT INTO refresh_tokens (user_id, token, expires_at) VALUES ($1, $2, $3)")
+        .bind(user.id)
+        .bind(&refresh_token)
+        .bind(expires_at)
+        .execute(&state.db)
+        .await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
     Ok(Json(AuthResponse {
-        token,
+        access_token,
+        refresh_token,
         user: UserResponse {
             id: user.id,
             username: user.username,
@@ -124,6 +126,61 @@ pub async fn login(
             role: user.role,
         },
     }))
+}
+
+pub async fn refresh(
+    State(state): State<AppState>,
+    Json(payload): Json<RefreshRequest>,
+) -> Result<Json<TokenResponse>, StatusCode> {
+    let row = sqlx::query!(
+        "SELECT user_id FROM refresh_tokens WHERE token = $1 AND expires_at > NOW()",
+        payload.refresh_token
+    )
+    .fetch_optional(&state.db)
+    .await
+    .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?
+    .ok_or(StatusCode::UNAUTHORIZED)?;
+
+    let user = sqlx::query_as::<_, User>("SELECT * FROM users WHERE id = $1")
+        .bind(row.user_id)
+        .fetch_one(&state.db)
+        .await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+
+    let (access_token, new_refresh_token) = generate_tokens(&user, state.jwt_secret.as_bytes())?;
+
+    sqlx::query("DELETE FROM refresh_tokens WHERE token = $1")
+        .bind(&payload.refresh_token)
+        .execute(&state.db)
+        .await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+
+    let expires_at = Utc::now() + Duration::days(7);
+    sqlx::query("INSERT INTO refresh_tokens (user_id, token, expires_at) VALUES ($1, $2, $3)")
+        .bind(user.id)
+        .bind(&new_refresh_token)
+        .bind(expires_at)
+        .execute(&state.db)
+        .await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+
+    Ok(Json(TokenResponse {
+        access_token,
+        refresh_token: new_refresh_token,
+    }))
+}
+
+pub async fn logout(
+    State(state): State<AppState>,
+    Json(payload): Json<RefreshRequest>,
+) -> Result<StatusCode, StatusCode> {
+    sqlx::query("DELETE FROM refresh_tokens WHERE token = $1")
+        .bind(&payload.refresh_token)
+        .execute(&state.db)
+        .await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+
+    Ok(StatusCode::OK)
 }
 
 pub async fn auth_middleware(
@@ -150,7 +207,6 @@ pub async fn auth_middleware(
     Ok(next.run(req).await)
 }
 
-
 pub async fn admin_middleware(
     mut req: Request,
     next: Next,
@@ -172,7 +228,7 @@ pub async fn admin_middleware(
     .map_err(|_| StatusCode::UNAUTHORIZED)?;
 
     if token_data.claims.role != "admin" {
-        return Err(StatusCode::FORBIDDEN); 
+        return Err(StatusCode::FORBIDDEN);
     }
 
     req.extensions_mut().insert(token_data.claims.sub);

@@ -48,7 +48,8 @@ pub struct LoginRequest {
 
 #[derive(Debug, Serialize)]
 pub struct AuthResponse {
-    pub token: String,
+    pub access_token: String,
+    pub refresh_token: String,
     pub user: UserResponse,
 }
 
@@ -57,7 +58,7 @@ pub struct Claims {
     pub sub: String,
     pub exp: usize,
     pub jti: Uuid,
-    pub role: String, 
+    pub role: String,
 }
 
 #[derive(Debug, Serialize, Deserialize, FromRow)]
@@ -111,7 +112,7 @@ pub struct UserResponse {
     pub id: Uuid,
     pub username: String,
     pub email: String,
-    pub role: String, 
+    pub role: String,
 }
 
 #[derive(Debug, Serialize, Deserialize, FromRow)]
@@ -143,4 +144,15 @@ pub struct CreateMuseumRequest {
 #[derive(Debug, Deserialize)]
 pub struct UpdateMuseumImagesRequest {
     pub image_urls: Vec<String>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct TokenResponse {
+    pub access_token: String,
+    pub refresh_token: String,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct RefreshRequest {
+    pub refresh_token: String,
 }
