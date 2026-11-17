@@ -22,13 +22,15 @@ export const Navigation: FC = () => {
 	}, [i18n])
 
 	return (
-		<div className='flex flex-col glass-effect rounded-2xl gap-7'>
-			<p className='text-2xl font-semibold mx-5 mt-7'>{t('navigation')}</p>
-			<div className='flex flex-col gap-8'>
+		<div className='flex flex-col bg-[#20231f] border border-white/10 rounded-2xl gap-6 p-5 md:p-6 min-w-56'>
+			<div><p className='eyebrow mb-2'>{t('collectionKicker')}</p><p className='text-xl font-semibold'>{t('navigation')}</p></div>
+			<div className='section-rule' />
+			<div className='flex flex-col gap-4'>
 				{museums.map((museum, index) => (
-					<div key={museum.id} className={`mx-5 ${index == museums.length - 1 && 'mb-7'}`}>
+					<div key={museum.id} className='flex items-center gap-3'>
+						<span className='text-[10px] text-[#d7a769] font-bold'>0{index + 1}</span>
 						<Link
-							className='text-lg hover:text-gray-300 transition-all'
+							className='text-sm text-white/75 hover:text-[#d7a769] transition-all leading-snug'
 							to={`/museum/id=${museum.id}`}
 						>
 							{museum.name}

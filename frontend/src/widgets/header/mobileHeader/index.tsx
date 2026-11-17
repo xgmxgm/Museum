@@ -30,9 +30,9 @@ export const MobileHeader: FC = () => {
 				duration: 0.6,
 				ease: [0.22, 1, 0.36, 1],
 			}}
-			className='w-full fixed top-0 flex justify-center z-10'
+			className='site-header w-full fixed top-0 flex justify-center z-10'
 		>
-			<div className='w-11/12 p-4 rounded-b-lg glass-effect'>
+			<div className='w-11/12 max-w-[1440px] py-3'>
 				<div className='flex items-center justify-between'>
 					<Link to='/' onClick={() => setIsOpen(false)}>
 						<Logo />
