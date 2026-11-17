@@ -133,7 +133,6 @@ export const MuseumPage: FC = () => {
 									slidesPerView={1}
 									spaceBetween={0}
 									loop={(museum?.image_urls?.length ?? 0) > 1}
-									// navigation
 									pagination={{ clickable: true }}
 									grabCursor
 									className='museum-gallery'
