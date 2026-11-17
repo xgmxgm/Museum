@@ -1,13 +1,14 @@
 use axum::{
-    extract::{State, Path},
+    extract::{State, Path, Multipart},
     Json,
     http::StatusCode,
 };
 use uuid::Uuid;
+use std::path::PathBuf;
+use tokio::fs;
 use crate::AppState;
 use crate::error::AppError;
-use crate::models::{Museum, CreateMuseumRequest};
-
+use crate::models::{Museum, CreateMuseumRequest, UpdateMuseumImagesRequest};
 
 pub async fn create_museum(
     State(state): State<AppState>,
@@ -49,7 +50,6 @@ pub async fn create_museum(
     Ok(Json(museum))
 }
 
-
 pub async fn update_museum(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -89,6 +89,29 @@ pub async fn update_museum(
     Ok(Json(museum))
 }
 
+pub async fn update_museum_images(
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
+    Json(payload): Json<UpdateMuseumImagesRequest>,
+) -> Result<Json<serde_json::Value>, AppError> {
+    let result = sqlx::query(
+        "UPDATE museums SET image_urls = $1 WHERE id = $2"
+    )
+    .bind(&payload.image_urls)
+    .bind(id)
+    .execute(&state.db)
+    .await
+    .map_err(|e| AppError::Internal(e.to_string()))?;
+
+    if result.rows_affected() == 0 {
+        return Err(AppError::NotFound("Музей не найден".into()));
+    }
+
+    Ok(Json(serde_json::json!({
+        "message": "Карусель успешно обновлена",
+        "image_urls": payload.image_urls
+    })))
+}
 
 pub async fn delete_museum(
     State(state): State<AppState>,
@@ -107,6 +130,47 @@ pub async fn delete_museum(
     Ok(StatusCode::NO_CONTENT)
 }
 
+pub async fn upload_image(
+    State(_state): State<AppState>,
+    Path(museum_id): Path<Uuid>,
+    mut multipart: Multipart,
+) -> Result<Json<serde_json::Value>, AppError> {
+    let mut file_name = String::new();
+
+    while let Some(field) = multipart.next_field().await.map_err(|e| AppError::BadRequest(e.to_string()))? {
+        let name = field.name().unwrap_or("").to_string();
+        
+        if name == "image" {
+            let original_filename = field.file_name().unwrap_or("upload.jpg").to_string();
+            let extension = std::path::Path::new(&original_filename)
+                .extension()
+                .and_then(|ext| ext.to_str())
+                .unwrap_or("jpg");
+            
+            let unique_id = Uuid::new_v4();
+            file_name = format!("{}_{}.{}", museum_id, unique_id, extension);
+            
+            let file_path = PathBuf::from("static").join(&file_name);
+
+            let data = field.bytes().await.map_err(|e| AppError::BadRequest(e.to_string()))?;
+            
+            fs::write(&file_path, data).await.map_err(|e| AppError::Internal(format!("Ошибка сохранения файла: {}", e)))?;
+            
+            break;
+        }
+    }
+
+    if file_name.is_empty() {
+        return Err(AppError::BadRequest("Файл не найден в запросе (ожидается поле 'image')".into()));
+    }
+
+    let url = format!("/static/{}", file_name);
+    
+    Ok(Json(serde_json::json!({
+        "message": "Файл успешно загружен",
+        "image_url": url
+    })))
+}
 
 pub async fn delete_any_comment(
     State(state): State<AppState>,
@@ -124,7 +188,6 @@ pub async fn delete_any_comment(
 
     Ok(StatusCode::NO_CONTENT)
 }
-
 
 pub async fn delete_any_review(
     State(state): State<AppState>,

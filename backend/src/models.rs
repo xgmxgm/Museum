@@ -139,3 +139,8 @@ pub struct CreateMuseumRequest {
     pub image_url: Option<String>,
     pub two_gis_url: Option<String>,
 }
+
+#[derive(Debug, Deserialize)]
+pub struct UpdateMuseumImagesRequest {
+    pub image_urls: Vec<String>,
+}
