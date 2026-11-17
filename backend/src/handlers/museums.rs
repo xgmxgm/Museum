@@ -4,6 +4,7 @@ use axum::{
 };
 use uuid::Uuid;
 use serde::Deserialize;
+use sqlx::QueryBuilder; 
 use crate::AppState;
 use crate::error::AppError;
 use crate::models::Museum;
@@ -13,6 +14,8 @@ pub struct Pagination {
     pub page: Option<u32>,
     pub limit: Option<u32>,
     pub lang: Option<String>,
+    pub search: Option<String>, 
+    pub city: Option<String>,   
 }
 
 pub async fn get_museums(
@@ -24,7 +27,7 @@ pub async fn get_museums(
     let offset = (page.saturating_sub(1)) * limit;
     let lang = pagination.lang.unwrap_or_else(|| "ru".to_string());
 
-    let museums = sqlx::query_as::<_, Museum>(
+        let mut qb = QueryBuilder::new(
         r#"
         SELECT 
             m.id, m.name, m.name_kz, m.description, m.description_kz,
@@ -33,25 +36,38 @@ pub async fn get_museums(
             AVG(r.rating)::float8 as average_rating
         FROM museums m
         LEFT JOIN reviews r ON m.id = r.museum_id
-        GROUP BY 
-            m.id, m.name, m.name_kz, m.description, m.description_kz, 
-            m.city, m.city_kz, m.address, m.address_kz, m.founded_year, m.image_url, m.image_urls, m.two_gis_url
-        LIMIT $1 OFFSET $2
+        WHERE 1=1
         "#
-    )
-    .bind(limit as i64)
-    .bind(offset as i64)
-    .fetch_all(&state.db)
-    .await
-    .map_err(|e| AppError::Internal(e.to_string()))?;
+    );
 
+        if let Some(search) = &pagination.search {
+        qb.push(" AND (m.name ILIKE ").push_bind(format!("%{}%", search))
+          .push(" OR m.description ILIKE ").push_bind(format!("%{}%", search)).push(")");
+    }
+
+    
+    if let Some(city) = &pagination.city {
+        qb.push(" AND m.city ILIKE ").push_bind(format!("%{}%", city));
+    }
+
+    
+    qb.push(" GROUP BY m.id, m.name, m.name_kz, m.description, m.description_kz, m.city, m.city_kz, m.address, m.address_kz, m.founded_year, m.image_url, m.image_urls, m.two_gis_url");
+    qb.push(" LIMIT ").push_bind(limit as i64);
+    qb.push(" OFFSET ").push_bind(offset as i64);
+
+    
+    let museums = qb.build_query_as::<Museum>()
+        .fetch_all(&state.db)
+        .await
+        .map_err(|e| AppError::Internal(e.to_string()))?;
+
+    
     let response: Vec<serde_json::Value> = museums
         .into_iter()
         .map(|m| {
             let name = if lang == "kz" { m.name_kz.unwrap_or(m.name.clone()) } else { m.name.clone() };
             let description = if lang == "kz" { m.description_kz.unwrap_or(m.description.clone()) } else { m.description.clone() };
             
-            // ЖЕСТКО ПРОПИСЫВАЕМ ГОРОДА И АДРЕСА ДЛЯ KZ (чтобы обойти глюк с кодировкой в БД)
             let (city, address) = if lang == "kz" {
                 match m.name.as_str() {
                     "Музей Абая" => ("Семей".to_string(), "Абай көшесі, 10".to_string()),
@@ -82,6 +98,7 @@ pub async fn get_museums(
 
     Ok(Json(response))
 }
+
 
 pub async fn get_museum_by_id(
     State(state): State<AppState>,
@@ -114,7 +131,6 @@ pub async fn get_museum_by_id(
     let name = if lang == "kz" { museum.name_kz.unwrap_or(museum.name.clone()) } else { museum.name.clone() };
     let description = if lang == "kz" { museum.description_kz.unwrap_or(museum.description.clone()) } else { museum.description.clone() };
     
-    // ЖЕСТКО ПРОПИСЫВАЕМ ДЛЯ KZ
     let (city, address) = if lang == "kz" {
         match museum.name.as_str() {
             "Музей Абая" => ("Семей".to_string(), "Абай көшесі, 10".to_string()),

@@ -36,7 +36,7 @@ async fn main() {
         jwt_secret: config.jwt_secret.clone(), 
     };
     
-    // Настройка CORS: разрешаем запросы с любых адресов (для разработки)
+    
     let cors = CorsLayer::new()
         .allow_origin(Any)
         .allow_methods(Any)

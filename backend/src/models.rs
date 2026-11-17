@@ -27,6 +27,7 @@ pub struct User {
     pub username: String,
     pub email: String,
     pub password_hash: String,
+    pub role: String,
 }
 
 #[derive(Debug, Deserialize, Validate)]
@@ -45,7 +46,6 @@ pub struct LoginRequest {
     pub password: String,
 }
 
-
 #[derive(Debug, Serialize)]
 pub struct AuthResponse {
     pub token: String,
@@ -57,6 +57,7 @@ pub struct Claims {
     pub sub: String,
     pub exp: usize,
     pub jti: Uuid,
+    pub role: String, 
 }
 
 #[derive(Debug, Serialize, Deserialize, FromRow)]
@@ -91,11 +92,26 @@ pub struct CreateReviewRequest {
     pub content: Option<String>,
 }
 
+#[derive(Debug, Deserialize, Validate)]
+pub struct UpdateReviewRequest {
+    #[validate(range(min = 1, max = 5))]
+    pub rating: i32,
+    pub content: Option<String>,
+}
+
+#[derive(Debug, Deserialize, Validate)]
+pub struct ChangePasswordRequest {
+    pub old_password: String,
+    #[validate(length(min = 8))]
+    pub new_password: String,
+}
+
 #[derive(Debug, Serialize, Deserialize, FromRow)]
 pub struct UserResponse {
     pub id: Uuid,
     pub username: String,
     pub email: String,
+    pub role: String, 
 }
 
 #[derive(Debug, Serialize, Deserialize, FromRow)]
@@ -106,4 +122,25 @@ pub struct CommentWithUser {
     pub content: String,
     pub created_at: chrono::DateTime<chrono::Utc>,
     pub username: String,
+}
+
+#[derive(Debug, Deserialize, Validate)]
+pub struct CreateMuseumRequest {
+    #[validate(length(min = 3, max = 255))]
+    pub name: String,
+    pub name_kz: Option<String>,
+    pub description: String,
+    pub description_kz: Option<String>,
+    pub city: String,
+    pub city_kz: Option<String>,
+    pub address: String,
+    pub address_kz: Option<String>,
+    pub founded_year: Option<i32>,
+    pub image_url: Option<String>,
+    pub two_gis_url: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct UpdateMuseumImagesRequest {
+    pub image_urls: Vec<String>,
 }

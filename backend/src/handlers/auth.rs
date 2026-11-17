@@ -1,6 +1,7 @@
 use axum::{
     extract::{State, Request, Extension},
     Json,
+    http::StatusCode,
     middleware::Next,
     response::Response,
 };
@@ -12,24 +13,27 @@ use chrono::{Utc, Duration};
 use uuid::Uuid;
 
 use crate::AppState;
-use crate::error::AppError;
-use crate::models::{User, UserResponse, RegisterRequest, LoginRequest, AuthResponse, Claims};
-
+use crate::models::{
+    User, UserResponse, RegisterRequest, LoginRequest, AuthResponse, Claims, ChangePasswordRequest
+};
 
 pub async fn register(
     State(state): State<AppState>,
     Json(payload): Json<RegisterRequest>,
-) -> Result<Json<AuthResponse>, AppError> {
-    payload.validate().map_err(|e| AppError::BadRequest(e.to_string()))?;
+) -> Result<Json<AuthResponse>, StatusCode> {
+    if payload.validate().is_err() {
+        return Err(StatusCode::BAD_REQUEST);
+    }
 
     let argon2 = Argon2::default();
     let password_hash = argon2
         .hash_password(payload.password.as_bytes())
-        .map_err(|_| AppError::Internal("Ошибка хеширования".into()))?
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?
         .to_string();
 
+    
     let user = sqlx::query_as::<_, User>(
-        "INSERT INTO users (username, email, password_hash) VALUES ($1, $2, $3) RETURNING *"
+        "INSERT INTO users (username, email, password_hash, role) VALUES ($1, $2, $3, 'user') RETURNING *"
     )
     .bind(&payload.username)
     .bind(&payload.email)
@@ -37,11 +41,8 @@ pub async fn register(
     .fetch_one(&state.db)
     .await
     .map_err(|e| {
-        if e.to_string().contains("duplicate key") {
-            AppError::Conflict("Пользователь с таким email или username уже существует".into())
-        } else {
-            AppError::Internal(e.to_string())
-        }
+        eprintln!("Ошибка БД при регистрации: {}", e);
+        StatusCode::INTERNAL_SERVER_ERROR
     })?;
 
     let expiration = Utc::now()
@@ -53,6 +54,7 @@ pub async fn register(
         sub: user.id.to_string(),
         exp: expiration,
         jti: Uuid::new_v4(),
+        role: user.role.clone(),
     };
 
     let token = encode(
@@ -60,41 +62,38 @@ pub async fn register(
         &claims,
         &EncodingKey::from_secret(state.jwt_secret.as_bytes()),
     )
-    .map_err(|_| AppError::Internal("Ошибка генерации токена".into()))?;
-
-    
-    let user_response = UserResponse {
-        id: user.id,
-        username: user.username,
-        email: user.email,
-    };
+    .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
     Ok(Json(AuthResponse {
         token,
-        user: user_response,
+        user: UserResponse {
+            id: user.id,
+            username: user.username,
+            email: user.email,
+            role: user.role,
+        },
     }))
 }
-
 
 pub async fn login(
     State(state): State<AppState>,
     Json(payload): Json<LoginRequest>,
-) -> Result<Json<AuthResponse>, AppError> {
+) -> Result<Json<AuthResponse>, StatusCode> {
     let user = sqlx::query_as::<_, User>("SELECT * FROM users WHERE email = $1")
         .bind(&payload.email)
         .fetch_optional(&state.db)
         .await
-        .map_err(|e| AppError::Internal(e.to_string()))?
-        .ok_or(AppError::Unauthorized)?;
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?
+        .ok_or(StatusCode::UNAUTHORIZED)?;
 
     let parsed_hash = PasswordHash::new(&user.password_hash)
-        .map_err(|_| AppError::Internal("Ошибка парсинга хеша".into()))?;
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
     if Argon2::default()
         .verify_password(payload.password.as_bytes(), &parsed_hash)
         .is_err()
     {
-        return Err(AppError::Unauthorized);
+        return Err(StatusCode::UNAUTHORIZED);
     }
 
     let expiration = Utc::now()
@@ -106,6 +105,7 @@ pub async fn login(
         sub: user.id.to_string(),
         exp: expiration,
         jti: Uuid::new_v4(),
+        role: user.role.clone(), 
     };
 
     let token = encode(
@@ -113,93 +113,146 @@ pub async fn login(
         &claims,
         &EncodingKey::from_secret(state.jwt_secret.as_bytes()),
     )
-    .map_err(|_| AppError::Internal("Ошибка генерации токена".into()))?;
-
-    
-    let user_response = UserResponse {
-        id: user.id,
-        username: user.username,
-        email: user.email,
-    };
+    .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
     Ok(Json(AuthResponse {
         token,
-        user: user_response,
+        user: UserResponse {
+            id: user.id,
+            username: user.username,
+            email: user.email,
+            role: user.role,
+        },
     }))
 }
 
-
 pub async fn auth_middleware(
-    State(state): State<AppState>,
     mut req: Request,
     next: Next,
-) -> Result<Response, AppError> {
+) -> Result<Response, StatusCode> {
     let auth_header = req
         .headers()
         .get(axum::http::header::AUTHORIZATION)
         .and_then(|header| header.to_str().ok())
         .and_then(|header| header.strip_prefix("Bearer "))
-        .ok_or(AppError::Unauthorized)?;
+        .ok_or(StatusCode::UNAUTHORIZED)?;
+
+    let secret = std::env::var("JWT_SECRET").unwrap_or_else(|_| "super_secret_key_museum_2026_super_long_and_safe".to_string());
 
     let token_data = decode::<Claims>(
         auth_header,
-        &DecodingKey::from_secret(state.jwt_secret.as_bytes()),
+        &DecodingKey::from_secret(secret.as_bytes()),
         &Validation::default(),
     )
-    .map_err(|_| AppError::Unauthorized)?;
-
-    let is_revoked = sqlx::query("SELECT 1 FROM revoked_tokens WHERE jti = $1")
-        .bind(token_data.claims.jti)
-        .fetch_optional(&state.db)
-        .await
-        .map_err(|e| AppError::Internal(e.to_string()))?
-        .is_some();
-
-    if is_revoked {
-        return Err(AppError::Unauthorized);
-    }
+    .map_err(|_| StatusCode::UNAUTHORIZED)?;
 
     req.extensions_mut().insert(token_data.claims.sub);
-    req.extensions_mut().insert(token_data.claims.jti);
-
     Ok(next.run(req).await)
 }
 
 
-pub async fn logout(
-    State(state): State<AppState>,
-    Extension(jti): Extension<Uuid>,
-) -> Result<(), AppError> {
-    let expires_at = Utc::now() + Duration::hours(24);
+pub async fn admin_middleware(
+    mut req: Request,
+    next: Next,
+) -> Result<Response, StatusCode> {
+    let auth_header = req
+        .headers()
+        .get(axum::http::header::AUTHORIZATION)
+        .and_then(|header| header.to_str().ok())
+        .and_then(|header| header.strip_prefix("Bearer "))
+        .ok_or(StatusCode::UNAUTHORIZED)?;
 
-    sqlx::query(
-        "INSERT INTO revoked_tokens (jti, expires_at) VALUES ($1, $2) ON CONFLICT (jti) DO NOTHING"
+    let secret = std::env::var("JWT_SECRET").unwrap_or_else(|_| "super_secret_key_museum_2026_super_long_and_safe".to_string());
+
+    let token_data = decode::<Claims>(
+        auth_header,
+        &DecodingKey::from_secret(secret.as_bytes()),
+        &Validation::default(),
     )
-    .bind(jti)
-    .bind(expires_at)
-    .execute(&state.db)
-    .await
-    .map_err(|e| AppError::Internal(e.to_string()))?;
+    .map_err(|_| StatusCode::UNAUTHORIZED)?;
 
-    Ok(())
+    if token_data.claims.role != "admin" {
+        return Err(StatusCode::FORBIDDEN); 
+    }
+
+    req.extensions_mut().insert(token_data.claims.sub);
+    Ok(next.run(req).await)
 }
 
-// --- GET_ME ---
 pub async fn get_me(
     State(state): State<AppState>,
     Extension(user_id): Extension<String>,
-) -> Result<Json<UserResponse>, AppError> {
-    let uuid = Uuid::parse_str(&user_id)
-        .map_err(|_| AppError::BadRequest("Неверный формат UUID".into()))?;
+) -> Result<Json<UserResponse>, StatusCode> {
+    let uuid = Uuid::parse_str(&user_id).map_err(|_| StatusCode::BAD_REQUEST)?;
 
     let user = sqlx::query_as::<_, UserResponse>(
-        "SELECT id, username, email FROM users WHERE id = $1"
+        "SELECT id, username, email, role FROM users WHERE id = $1"
     )
     .bind(uuid)
     .fetch_optional(&state.db)
     .await
-    .map_err(|e| AppError::Internal(e.to_string()))?
-    .ok_or(AppError::NotFound("Пользователь не найден".into()))?;
+    .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?
+    .ok_or(StatusCode::NOT_FOUND)?;
 
     Ok(Json(user))
+}
+
+pub async fn change_password(
+    State(state): State<AppState>,
+    Extension(user_id): Extension<String>,
+    Json(payload): Json<ChangePasswordRequest>,
+) -> Result<StatusCode, crate::error::AppError> {
+    payload.validate().map_err(|e| crate::error::AppError::BadRequest(e.to_string()))?;
+    let uuid = Uuid::parse_str(&user_id).map_err(|_| crate::error::AppError::BadRequest("Неверный ID".into()))?;
+
+    let user = sqlx::query_as::<_, User>("SELECT * FROM users WHERE id = $1")
+        .bind(uuid)
+        .fetch_optional(&state.db)
+        .await
+        .map_err(|e| crate::error::AppError::Internal(e.to_string()))?
+        .ok_or(crate::error::AppError::NotFound("Пользователь не найден".into()))?;
+
+    let parsed_hash = PasswordHash::new(&user.password_hash)
+        .map_err(|_| crate::error::AppError::Internal("Ошибка хеша".into()))?;
+
+    if Argon2::default()
+        .verify_password(payload.old_password.as_bytes(), &parsed_hash)
+        .is_err()
+    {
+        return Err(crate::error::AppError::BadRequest("Неверный старый пароль".into()));
+    }
+
+    let argon2 = Argon2::default();
+    let new_hash = argon2
+        .hash_password(payload.new_password.as_bytes())
+        .map_err(|_| crate::error::AppError::Internal("Ошибка хеширования".into()))?
+        .to_string();
+
+    sqlx::query("UPDATE users SET password_hash = $1 WHERE id = $2")
+        .bind(&new_hash)
+        .bind(uuid)
+        .execute(&state.db)
+        .await
+        .map_err(|e| crate::error::AppError::Internal(e.to_string()))?;
+
+    Ok(StatusCode::OK)
+}
+
+pub async fn delete_account(
+    State(state): State<AppState>,
+    Extension(user_id): Extension<String>,
+) -> Result<StatusCode, crate::error::AppError> {
+    let uuid = Uuid::parse_str(&user_id).map_err(|_| crate::error::AppError::BadRequest("Неверный ID".into()))?;
+
+    let result = sqlx::query("DELETE FROM users WHERE id = $1")
+        .bind(uuid)
+        .execute(&state.db)
+        .await
+        .map_err(|e| crate::error::AppError::Internal(e.to_string()))?;
+
+    if result.rows_affected() == 0 {
+        return Err(crate::error::AppError::NotFound("Пользователь не найден".into()));
+    }
+
+    Ok(StatusCode::NO_CONTENT)
 }

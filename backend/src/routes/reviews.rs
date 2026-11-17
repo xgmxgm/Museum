@@ -1,5 +1,5 @@
-use axum::{routing::{get, post}, Router, middleware};
-use crate::handlers::reviews::{get_reviews, create_review};
+use axum::{routing::{get, post, put}, Router, middleware};
+use crate::handlers::reviews::{get_reviews, create_review, update_review};
 use crate::handlers::auth::auth_middleware;
 use crate::AppState;
 
@@ -9,6 +9,7 @@ pub fn review_routes(state: AppState) -> Router<AppState> {
 
     let protected = Router::new()
         .route("/api/museums/{id}/reviews", post(create_review))
+        .route("/api/museums/{id}/reviews", put(update_review))
         .layer(middleware::from_fn_with_state(state, auth_middleware));
 
     public.merge(protected)
