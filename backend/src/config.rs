@@ -2,7 +2,7 @@ pub struct Config {
     pub database_url: String,
     pub jwt_secret: String,
     pub port: u16,
-    pub frontend_url: String,
+//    pub frontend_url: String,
 }
 
 impl Config {
@@ -11,7 +11,7 @@ impl Config {
             database_url: std::env::var("DATABASE_URL").expect("DATABASE_URL must be set"),
             jwt_secret: std::env::var("JWT_SECRET").expect("JWT_SECRET must be set"),
             port: std::env::var("PORT").unwrap_or_else(|_| "3000".to_string()).parse().expect("PORT must be a number"),
-            frontend_url: std::env::var("FRONTEND_URL").unwrap_or_else(|_| "http://localhost:5173".to_string()),
+//            frontend_url: std::env::var("FRONTEND_URL").unwrap_or_else(|_| "http://localhost:5173".to_string()),
         }
     }
 }

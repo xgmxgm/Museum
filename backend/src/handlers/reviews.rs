@@ -64,7 +64,7 @@ pub async fn create_review(
     Ok(Json(review))
 }
 
-// НОВОЕ: Обновление отзыва
+
 pub async fn update_review(
     State(state): State<AppState>,
     Path(museum_id): Path<Uuid>,

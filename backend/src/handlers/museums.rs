@@ -4,7 +4,7 @@ use axum::{
 };
 use uuid::Uuid;
 use serde::Deserialize;
-use sqlx::QueryBuilder; // <-- ДОБАВИЛИ
+use sqlx::QueryBuilder; 
 use crate::AppState;
 use crate::error::AppError;
 use crate::models::Museum;
@@ -14,8 +14,8 @@ pub struct Pagination {
     pub page: Option<u32>,
     pub limit: Option<u32>,
     pub lang: Option<String>,
-    pub search: Option<String>, // <-- ДОБАВИЛИ
-    pub city: Option<String>,   // <-- ДОБАВИЛИ
+    pub search: Option<String>, 
+    pub city: Option<String>,   
 }
 
 pub async fn get_museums(
@@ -27,8 +27,7 @@ pub async fn get_museums(
     let offset = (page.saturating_sub(1)) * limit;
     let lang = pagination.lang.unwrap_or_else(|| "ru".to_string());
 
-    // Начинаем строить запрос динамически
-    let mut qb = QueryBuilder::new(
+        let mut qb = QueryBuilder::new(
         r#"
         SELECT 
             m.id, m.name, m.name_kz, m.description, m.description_kz,
@@ -41,29 +40,28 @@ pub async fn get_museums(
         "#
     );
 
-    // Добавляем фильтр по поиску (если есть)
-    if let Some(search) = &pagination.search {
+        if let Some(search) = &pagination.search {
         qb.push(" AND (m.name ILIKE ").push_bind(format!("%{}%", search))
           .push(" OR m.description ILIKE ").push_bind(format!("%{}%", search)).push(")");
     }
 
-    // Добавляем фильтр по городу (если есть)
+    
     if let Some(city) = &pagination.city {
         qb.push(" AND m.city ILIKE ").push_bind(format!("%{}%", city));
     }
 
-    // Группировка и пагинация
+    
     qb.push(" GROUP BY m.id, m.name, m.name_kz, m.description, m.description_kz, m.city, m.city_kz, m.address, m.address_kz, m.founded_year, m.image_url, m.image_urls, m.two_gis_url");
     qb.push(" LIMIT ").push_bind(limit as i64);
     qb.push(" OFFSET ").push_bind(offset as i64);
 
-    // Выполняем запрос
+    
     let museums = qb.build_query_as::<Museum>()
         .fetch_all(&state.db)
         .await
         .map_err(|e| AppError::Internal(e.to_string()))?;
 
-    // Маппинг в JSON (с переводами)
+    
     let response: Vec<serde_json::Value> = museums
         .into_iter()
         .map(|m| {
@@ -101,7 +99,7 @@ pub async fn get_museums(
     Ok(Json(response))
 }
 
-// get_museum_by_id оставляем без изменений
+
 pub async fn get_museum_by_id(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,

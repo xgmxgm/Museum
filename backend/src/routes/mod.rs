@@ -3,6 +3,7 @@ pub mod museums;
 pub mod auth;
 pub mod comments;
 pub mod reviews;
+pub mod admin;
 
 use axum::Router;
 use crate::AppState;
@@ -15,5 +16,6 @@ pub fn create_router(state: AppState) -> Router {
         .merge(auth::auth_routes(state.clone()))
         .merge(comments::comment_routes(state.clone()))
         .merge(reviews::review_routes(state.clone()))
+        .merge(admin::admin_routes(state.clone()))
         .with_state(state)
 }

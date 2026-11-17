@@ -31,8 +31,9 @@ pub async fn register(
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?
         .to_string();
 
+    
     let user = sqlx::query_as::<_, User>(
-        "INSERT INTO users (username, email, password_hash) VALUES ($1, $2, $3) RETURNING *"
+        "INSERT INTO users (username, email, password_hash, role) VALUES ($1, $2, $3, 'user') RETURNING *"
     )
     .bind(&payload.username)
     .bind(&payload.email)
@@ -53,6 +54,7 @@ pub async fn register(
         sub: user.id.to_string(),
         exp: expiration,
         jti: Uuid::new_v4(),
+        role: user.role.clone(),
     };
 
     let token = encode(
@@ -68,6 +70,7 @@ pub async fn register(
             id: user.id,
             username: user.username,
             email: user.email,
+            role: user.role,
         },
     }))
 }
@@ -102,6 +105,7 @@ pub async fn login(
         sub: user.id.to_string(),
         exp: expiration,
         jti: Uuid::new_v4(),
+        role: user.role.clone(), 
     };
 
     let token = encode(
@@ -117,6 +121,7 @@ pub async fn login(
             id: user.id,
             username: user.username,
             email: user.email,
+            role: user.role,
         },
     }))
 }
@@ -132,8 +137,6 @@ pub async fn auth_middleware(
         .and_then(|header| header.strip_prefix("Bearer "))
         .ok_or(StatusCode::UNAUTHORIZED)?;
 
-    // Здесь мы не можем использовать state, поэтому читаем секрет из env (как раньше)
-    // В идеале передавать через from_fn_with_state, но для простоты оставим так
     let secret = std::env::var("JWT_SECRET").unwrap_or_else(|_| "super_secret_key_museum_2026_super_long_and_safe".to_string());
 
     let token_data = decode::<Claims>(
@@ -147,6 +150,35 @@ pub async fn auth_middleware(
     Ok(next.run(req).await)
 }
 
+
+pub async fn admin_middleware(
+    mut req: Request,
+    next: Next,
+) -> Result<Response, StatusCode> {
+    let auth_header = req
+        .headers()
+        .get(axum::http::header::AUTHORIZATION)
+        .and_then(|header| header.to_str().ok())
+        .and_then(|header| header.strip_prefix("Bearer "))
+        .ok_or(StatusCode::UNAUTHORIZED)?;
+
+    let secret = std::env::var("JWT_SECRET").unwrap_or_else(|_| "super_secret_key_museum_2026_super_long_and_safe".to_string());
+
+    let token_data = decode::<Claims>(
+        auth_header,
+        &DecodingKey::from_secret(secret.as_bytes()),
+        &Validation::default(),
+    )
+    .map_err(|_| StatusCode::UNAUTHORIZED)?;
+
+    if token_data.claims.role != "admin" {
+        return Err(StatusCode::FORBIDDEN); 
+    }
+
+    req.extensions_mut().insert(token_data.claims.sub);
+    Ok(next.run(req).await)
+}
+
 pub async fn get_me(
     State(state): State<AppState>,
     Extension(user_id): Extension<String>,
@@ -154,7 +186,7 @@ pub async fn get_me(
     let uuid = Uuid::parse_str(&user_id).map_err(|_| StatusCode::BAD_REQUEST)?;
 
     let user = sqlx::query_as::<_, UserResponse>(
-        "SELECT id, username, email FROM users WHERE id = $1"
+        "SELECT id, username, email, role FROM users WHERE id = $1"
     )
     .bind(uuid)
     .fetch_optional(&state.db)
@@ -165,7 +197,6 @@ pub async fn get_me(
     Ok(Json(user))
 }
 
-// НОВОЕ: Смена пароля
 pub async fn change_password(
     State(state): State<AppState>,
     Extension(user_id): Extension<String>,
@@ -207,7 +238,6 @@ pub async fn change_password(
     Ok(StatusCode::OK)
 }
 
-// НОВОЕ: Удаление аккаунта
 pub async fn delete_account(
     State(state): State<AppState>,
     Extension(user_id): Extension<String>,
