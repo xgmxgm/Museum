@@ -45,7 +45,6 @@ pub struct LoginRequest {
     pub password: String,
 }
 
-
 #[derive(Debug, Serialize)]
 pub struct AuthResponse {
     pub token: String,
@@ -89,6 +88,22 @@ pub struct CreateReviewRequest {
     #[validate(range(min = 1, max = 5))]
     pub rating: i32,
     pub content: Option<String>,
+}
+
+// НОВОЕ: Запрос на редактирование отзыва
+#[derive(Debug, Deserialize, Validate)]
+pub struct UpdateReviewRequest {
+    #[validate(range(min = 1, max = 5))]
+    pub rating: i32,
+    pub content: Option<String>,
+}
+
+// НОВОЕ: Запрос на смену пароля
+#[derive(Debug, Deserialize, Validate)]
+pub struct ChangePasswordRequest {
+    pub old_password: String,
+    #[validate(length(min = 8))]
+    pub new_password: String,
 }
 
 #[derive(Debug, Serialize, Deserialize, FromRow)]
