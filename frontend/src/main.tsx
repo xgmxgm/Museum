@@ -8,7 +8,7 @@ import './app/i18n.ts'
 
 createRoot(document.getElementById('root')!).render(
 	<StrictMode>
-		<Suspense fallback={<div>Loading translations...</div>}>
+		<Suspense fallback={<></>}>
 			<NotificationProvider>
 				<AuthProvider>
 					<App />

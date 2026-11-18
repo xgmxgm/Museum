@@ -15,9 +15,9 @@ export const AuthorizePage: FC = () => {
 	}, [isAuth])
 
 	return (
-		<div className="bg-[url('./images/mainBackground.png')] bg-cover bg-center h-screen flex justify-center">
+		<div className='auth-backdrop min-h-screen flex justify-center'>
 			<div className='w-10/12 flex justify-center items-center'>
-				<div className='bg-custom-black  p-10 rounded-xl'>
+				<div className='bg-[#171a17]/90 border border-white/10 backdrop-blur-xl p-7 md:p-10 rounded-2xl shadow-2xl shadow-black/30'>
 					{isSignIn ? (
 						<SignIn setIsSignIn={setIsSignIn} />
 					) : (

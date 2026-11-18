@@ -24,18 +24,18 @@ export const DesktopHeader: FC = () => {
 				duration: 0.6,
 				ease: [0.22, 1, 0.36, 1],
 			}}
-			className='w-full flex items-center justify-center fixed z-10'
+			className='site-header w-full flex items-center justify-center fixed z-10'
 		>
-			<div className='p-7 rounded-b-lg w-11/12 flex items-center justify-between glass-effect'>
+			<div className='px-2 py-4 md:py-5 w-11/12 max-w-[1440px] flex items-center justify-between'>
 				<Link to='/'>
 					<Logo />
 				</Link>
-				<div className='flex gap-5 justify-center items-center'>
+				<div className='flex gap-6 justify-center items-center text-sm'>
 					{isAuth ? (
 						<div className='flex items-center justify-center gap-5'>
 							<p>{user?.user.username}</p>
 							<button
-								className='cursor-pointer flex items-center gap-2'
+								className='cursor-pointer flex items-center gap-2 hover:text-[#d7a769] transition-colors'
 								onClick={() => logout()}
 							>
 								{t('exit')}
@@ -43,7 +43,7 @@ export const DesktopHeader: FC = () => {
 							</button>
 						</div>
 					) : (
-						<Link to={{ pathname: '/Authorize' }}>{t('signIn')}</Link>
+						<Link className='rounded-full border border-white/20 px-5 py-2.5 hover:bg-white/10 transition-colors' to={{ pathname: '/Authorize' }}>{t('signIn')}</Link>
 					)}
 					<Select
 						defaultValue='kz'
