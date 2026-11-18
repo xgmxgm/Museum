@@ -33,7 +33,7 @@ export const Button: FC<IProps> = ({
             disabled={disabled || isLoading}
             className={`${baseStyles} ${styles[stylesBtn]} ${className ?? ''}`}
         >
-            {isLoading || disabled ? (
+            {isLoading ? (
                 <span className="w-5 h-5 border-2 border-gray-400 border-t-black rounded-full animate-spin" />
             ) : (
                 children

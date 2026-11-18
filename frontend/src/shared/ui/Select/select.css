@@ -1,14 +1,29 @@
+.custom-select-wrap { position: relative; display: inline-flex; align-items: center; }
 .custom-select {
-	border: none;
+	appearance: none;
+	min-width: 5.5rem;
+	border: 1px solid rgba(255,255,255,.17);
+	border-radius: 999px;
+	background: linear-gradient(145deg, rgba(45,49,43,.94), rgba(28,31,27,.96));
+	color: #f4efe5;
 	outline: none;
 	cursor: pointer;
+	padding: .65rem 2.35rem .65rem 1rem;
+	font: inherit;
+	font-size: .8rem;
+	font-weight: 700;
+	letter-spacing: .08em;
+	box-shadow: 0 8px 24px rgba(0,0,0,.18), inset 0 1px 0 rgba(255,255,255,.06);
+	transition: border-color .2s ease, box-shadow .2s ease, background .2s ease;
 }
+.custom-select:hover { border-color: rgba(215,167,105,.7); background: #252923; }
+.custom-select:focus-visible { border-color: #d7a769; box-shadow: 0 0 0 3px rgba(215,167,105,.2); }
+.custom-select-icon { position: absolute; right: .8rem; pointer-events: none; color: #d7a769; }
 
 .custom-option {
-	background-color: #1e293b;
-	color: #f1f5f9;
+	background-color: #20231f;
+	color: #f4efe5;
 	font-size: 14px;
-	padding: 10px;
 }
 
 .custom-option:checked {

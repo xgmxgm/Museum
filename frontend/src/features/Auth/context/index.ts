@@ -6,6 +6,8 @@ export const AuthContext = createContext<IAuthContext>({
 	registerUserWithEmailAndPassword: async () => await Promise.reject({}),
 	loginWithEmailAndPassword: async () => await Promise.reject({}),
 	logout: () => {},
+	changePassword: async () => await Promise.reject({}),
+	deleteAccount: async () => await Promise.reject({}),
 	user: null,
 })
 

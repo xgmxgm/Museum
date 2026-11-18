@@ -2,10 +2,12 @@ export interface UserData {
 	id: string
 	username: string
 	email: string
+	role: string
 }
 
 export type User = {
 	token: string
+	refreshToken: string
 	user: UserData
 }
 
@@ -24,5 +26,7 @@ export interface IAuthContext {
 		setIsLoading: (isLoading: boolean) => void,
 	) => void
 	logout: () => void
+	changePassword: (oldPassword: string, newPassword: string) => Promise<void>
+	deleteAccount: () => Promise<void>
 	user: User | null
 }

@@ -9,6 +9,14 @@ export const AuthProvider: FC<PropsWithChildren> = ({ children }) => {
 	const [isAuth, setIsAuth] = useState<boolean | undefined>(undefined)
 	const [user, setUser] = useState<User | null>(null)
 
+	const saveSession = (data: { access_token: string; refresh_token: string; user: User['user'] }) => {
+		localStorage.setItem('access_token', data.access_token)
+		localStorage.setItem('refresh_token', data.refresh_token)
+		localStorage.removeItem('token')
+		setUser({ token: data.access_token, refreshToken: data.refresh_token, user: data.user })
+		setIsAuth(true)
+	}
+
 	const registerUserWithEmailAndPassword = async (
 		username: string,
 		email: string,
@@ -26,9 +34,7 @@ export const AuthProvider: FC<PropsWithChildren> = ({ children }) => {
 		await api
 			.post('/auth/register', { username, email, password })
 			.then(res => {
-				localStorage.setItem('token', res.data.token)
-				setUser(res.data)
-				setIsAuth(true)
+				saveSession(res.data)
 				setNotification('successfullyRegister')
 			})
 			.catch(e => {
@@ -50,9 +56,7 @@ export const AuthProvider: FC<PropsWithChildren> = ({ children }) => {
 		await api
 			.post('/auth/login', { email, password })
 			.then(res => {
-				localStorage.setItem('token', res.data.token)
-				setUser(res.data)
-				setIsAuth(true)
+				saveSession(res.data)
 				setNotification('successfullyLogin')
 			})
 			.catch(e => {
@@ -64,31 +68,62 @@ export const AuthProvider: FC<PropsWithChildren> = ({ children }) => {
 			})
 	}
 
+	const clearSession = () => {
+		setUser(null)
+		setIsAuth(false)
+		localStorage.removeItem('access_token')
+		localStorage.removeItem('refresh_token')
+		localStorage.removeItem('token')
+	}
+
 	const logout = async () => {
-		await api.post('/auth/logout', {}).then(() => {
-			setUser(null)
-			setIsAuth(false)
-			localStorage.removeItem('token')
+		const refreshToken = localStorage.getItem('refresh_token')
+		try {
+			if (refreshToken) await api.post('/auth/logout', { refresh_token: refreshToken })
+		} catch (error) {
+			console.warn('Logout request failed; clearing the local session.', error)
+		} finally {
+			clearSession()
 			setNotification('successfullyLogout')
-		})
+		}
+	}
+
+	const changePassword = async (oldPassword: string, newPassword: string) => {
+		await api.patch('/users/me/password', { old_password: oldPassword, new_password: newPassword })
+	}
+
+	const deleteAccount = async () => {
+		await api.delete('/users/me')
+		clearSession()
 	}
 
 	useEffect(() => {
-		const fetchUser = async () => {
-			const tokenFromLocalStorage = localStorage.getItem('token')
+		const handleExpired = () => clearSession()
+		window.addEventListener('museum:auth-expired', handleExpired)
+		return () => window.removeEventListener('museum:auth-expired', handleExpired)
+	}, [])
 
-			if (tokenFromLocalStorage) {
-				await api
-					.get('/users/me')
-					.then(res => {
-						setUser({ user: res.data, token: tokenFromLocalStorage })
-						setIsAuth(true)
-						setNotification('successfullyLogin')
-					})
-					.catch(e => console.error(e))
+	useEffect(() => {
+		const fetchUser = async () => {
+			const accessToken = localStorage.getItem('access_token') || localStorage.getItem('token')
+			const refreshToken = localStorage.getItem('refresh_token') || ''
+			if (!accessToken) {
+				setIsAuth(false)
+				return
+			}
+			try {
+				const res = await api.get('/users/me')
+				setUser({
+					token: localStorage.getItem('access_token') || accessToken,
+					refreshToken: localStorage.getItem('refresh_token') || refreshToken,
+					user: res.data,
+				})
+				setIsAuth(true)
+			} catch (error) {
+				console.error(error)
+				if (!localStorage.getItem('access_token')) clearSession()
 			}
 		}
-
 		fetchUser()
 	}, [])
 
@@ -99,6 +134,8 @@ export const AuthProvider: FC<PropsWithChildren> = ({ children }) => {
 				user,
 				loginWithEmailAndPassword,
 				logout,
+			changePassword,
+			deleteAccount,
 				registerUserWithEmailAndPassword,
 			}}
 		>

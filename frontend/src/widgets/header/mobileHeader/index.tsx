@@ -59,7 +59,8 @@ export const MobileHeader: FC = () => {
 							<div className='flex flex-col gap-5 border-t border-white/20 pt-4 mt-5'>
 								{isAuth ? (
 									<>
-										<p className='font-semibold'>{user?.user.username}</p>
+										<Link to='/account' onClick={() => setIsOpen(false)} className='font-semibold transition-colors hover:text-[#d7a769]'>{user?.user.username}</Link>
+										{user?.user.role === 'admin' && <Link to='/admin' onClick={() => setIsOpen(false)} className='text-[#d7a769]'>Панель администратора</Link>}
 
 										<button
 											type='button'

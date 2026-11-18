@@ -1,4 +1,5 @@
 import { type FC, type SelectHTMLAttributes } from 'react'
+import { FiChevronDown } from 'react-icons/fi'
 import './select.css'
 
 type option = {
@@ -11,18 +12,13 @@ interface IProps extends SelectHTMLAttributes<HTMLSelectElement> {
     options?: option[]
 }
 
-export const Select: FC<IProps> = ({ options = [], ...props }) => {
+export const Select: FC<IProps> = ({ options = [], className = '', ...props }) => {
     return (
-        <select className="custom-select" {...props}>
-            {options.map(option => (
-                <option
-                    className="custom-option"
-                    key={option.value}
-                    value={option.value}
-                >
-                    {option.label}
-                </option>
-            ))}
-        </select>
+        <span className="custom-select-wrap">
+            <select className={`custom-select ${className}`} {...props}>
+                {options.map(option => <option className="custom-option" key={option.value} value={option.value}>{option.label}</option>)}
+            </select>
+            <FiChevronDown aria-hidden="true" className="custom-select-icon" />
+        </span>
     )
 }

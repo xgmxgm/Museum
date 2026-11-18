@@ -4,6 +4,8 @@ import { HomePage } from '../../../pages/Home'
 import { AuthorizePage } from '../../../pages/Authorize'
 import { Footer } from '../../../widgets/footer'
 import { MuseumPage } from '../../../pages/Museum'
+import { AdminPage } from '../../../pages/Admin'
+import { AccountPage } from '../../../pages/Account'
 
 export const router = createBrowserRouter([
 	{
@@ -34,5 +36,13 @@ export const router = createBrowserRouter([
 				<MuseumPage />
 			</>
 		),
+	},
+	{
+		path: '/admin',
+		element: <><Header /><AdminPage /><Footer /></>,
+	},
+	{
+		path: '/account',
+		element: <><Header /><AccountPage /><Footer /></>,
 	},
 ])

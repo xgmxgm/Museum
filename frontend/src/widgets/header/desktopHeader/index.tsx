@@ -33,7 +33,8 @@ export const DesktopHeader: FC = () => {
 				<div className='flex gap-6 justify-center items-center text-sm'>
 					{isAuth ? (
 						<div className='flex items-center justify-center gap-5'>
-							<p>{user?.user.username}</p>
+							<Link to='/account' className='font-medium transition-colors hover:text-[#d7a769]'>{user?.user.username}</Link>
+							{user?.user.role === 'admin' && <Link to='/admin' className='hover:text-[#d7a769]'>Админ</Link>}
 							<button
 								className='cursor-pointer flex items-center gap-2 hover:text-[#d7a769] transition-colors'
 								onClick={() => logout()}
@@ -46,7 +47,7 @@ export const DesktopHeader: FC = () => {
 						<Link className='rounded-full border border-white/20 px-5 py-2.5 hover:bg-white/10 transition-colors' to={{ pathname: '/Authorize' }}>{t('signIn')}</Link>
 					)}
 					<Select
-						defaultValue='kz'
+						value={i18n.language.split('-')[0]}
 						onChange={e => changeLanguage(e.target.value)}
 						options={[
 							{ value: 'kz', label: 'KZ' },
